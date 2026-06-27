@@ -25,18 +25,16 @@ exports.handler = async function (event) {
     });
   }
 
-  const cleanName = sanitizeText(name).slice(0, 30);
+  const cleanName = sanitizeText(name).slice(0, 25);
 
   const answersText = answers
     .map((item, index) => {
       const question = sanitizeText(item.question || "");
       const answer = sanitizeText(item.answer || "");
 
-      return `Nomor ${index + 1}
-Pertanyaan: ${question}
-Jawaban: ${answer}`;
+      return `${index + 1}. ${question} -> ${answer}`;
     })
-    .join("\n\n");
+    .join("\n");
 
   if (!GROQ_API_KEY) {
     return jsonResponse(200, {
@@ -47,52 +45,66 @@ Jawaban: ${answer}`;
   }
 
   const systemPrompt = `
-Kamu adalah generator roast bahasa Indonesia.
+Kamu adalah AI roast generator bahasa Indonesia untuk web hiburan.
 
-Gaya roast:
-- Dingin.
-- Menusuk.
-- Personal berdasarkan jawaban user.
-- Ngejek secara lucu.
-- Singkat, tajam, dan tidak bertele-tele.
+Gaya wajib:
+- Kasar ringan sampai sedang boleh.
+- Boleh pakai kata seperti: anjir, goblok, tolol, bego, kampret, buset.
+- Dingin, nyebelin, personal, dan ngejek.
+- Harus terdengar seperti ejekan teman tongkrongan, bukan kalimat formal.
+- Singkat dan langsung nusuk.
 
-Batasan wajib:
+Batasan:
 - Jangan SARA.
 - Jangan politik.
-- Jangan seksual.
-- Jangan menyerang fisik, disabilitas, penyakit, keluarga, kemiskinan, atau trauma.
-- Jangan menggunakan kata kasar ekstrem.
+- Jangan seksual eksplisit.
+- Jangan menyerang fisik, penyakit, disabilitas, keluarga, kemiskinan, atau trauma.
+- Jangan ancaman.
 - Jangan memberi nasihat.
-- Jangan membuat cerita panjang.
-- Jangan pakai emoji.
-- Jangan pakai pembuka seperti "Oke", "Baik", atau "Ini roast-nya".
-- Jangan sebut "berdasarkan jawabanmu".
+- Jangan terdengar puitis.
 - Jangan terdengar seperti motivator.
-- Jangan terlalu aman atau terlalu sopan.
-- Output hanya roast final.
+- Jangan memakai kalimat formal.
+
+Kata/frasa yang dilarang:
+- sepertinya
+- kehidupanmu
+- komedi situasional
+- skenario
+- berdasarkan jawabanmu
+- mencerminkan
+- menunjukkan bahwa
+- mungkin kamu perlu
+- kamu adalah pribadi
+- tampaknya
+
+Output:
+- Hanya 1 kalimat.
+- Maksimal 16 kata.
+- Tidak boleh ada pembuka.
+- Tidak boleh ada penjelasan.
 `;
 
   const userPrompt = `
-Nama target: ${cleanName}
+Nama: ${cleanName}
 
-Jawaban target:
+Jawaban:
 ${answersText}
 
-Tugas:
-Buat roast untuk ${cleanName}.
+Buat 1 roast pendek untuk ${cleanName}.
 
-Aturan output:
-- Maksimal 2 kalimat.
-- Maksimal 28 kata.
-- Harus terasa personal dari pilihan jawabannya.
-- Harus lebih nyelekit daripada lucu receh.
+Aturan:
+- Maksimal 16 kata.
+- Harus dingin, kasar, personal, dan nyelekit.
+- Jangan formal.
+- Jangan panjang.
 - Jangan pakai analogi panjang.
-- Jangan mengulang pola "kamu kayak...".
-- Jangan menjelaskan alasan roast.
-- Langsung tulis roast-nya saja.
+- Jangan pakai emoji.
+- Langsung roast saja.
 
 Contoh gaya:
-${cleanName}, kamu bukan misterius, cuma susah dipahami karena isinya juga belum tentu jelas. Bahkan pilihan hidupmu kelihatan seperti hasil klik asal.
+${cleanName}, pilihanmu gobloknya konsisten, kayak hidupmu dikendalikan tombol skip.
+${cleanName}, kamu bukan random, kamu cuma berantakan dan terlalu pede buat sadar.
+${cleanName}, auramu kayak orang sok santai, padahal isi kepalanya error 404.
 `;
 
   try {
@@ -104,8 +116,8 @@ ${cleanName}, kamu bukan misterius, cuma susah dipahami karena isinya juga belum
       },
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
-        max_tokens: 80,
-        temperature: 0.75,
+        max_tokens: 45,
+        temperature: 1.0,
         messages: [
           {
             role: "system",
@@ -132,14 +144,11 @@ ${cleanName}, kamu bukan misterius, cuma susah dipahami karena isinya juga belum
     let roast = data.choices?.[0]?.message?.content?.trim() || "";
 
     roast = cleanRoast(roast);
-    roast = limitRoast(roast, 28);
+    roast = forceOneSentence(roast);
+    roast = limitWords(roast, 16);
 
-    if (!roast) {
-      return jsonResponse(200, {
-        roast: makeFallbackRoast(cleanName, answers),
-        source: "fallback",
-        note: "Respons roast kosong dari Groq.",
-      });
+    if (!isGoodRoast(roast)) {
+      roast = makeFallbackRoast(cleanName, answers);
     }
 
     return jsonResponse(200, {
@@ -179,30 +188,61 @@ function cleanRoast(text) {
     .replace(/^Roast:\s*/i, "")
     .replace(/^AI Roast:\s*/i, "")
     .replace(/^Ini roast-nya:\s*/i, "")
+    .replace(/^🔥\s*/i, "")
     .replace(/\n+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function limitRoast(text, maxWords) {
-  const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+function forceOneSentence(text) {
+  const match = text.match(/[^.!?]+[.!?]?/);
+  if (!match) return text.trim();
 
-  let limited = sentences
-    .slice(0, 2)
-    .join(" ")
-    .trim();
+  let sentence = match[0].trim();
 
-  const words = limited.split(/\s+/);
+  if (!/[.!?]$/.test(sentence)) {
+    sentence += ".";
+  }
 
-  if (words.length > maxWords) {
-    limited = words.slice(0, maxWords).join(" ");
+  return sentence;
+}
 
-    if (!/[.!?]$/.test(limited)) {
-      limited += ".";
-    }
+function limitWords(text, maxWords) {
+  const words = text.split(/\s+/).filter(Boolean);
+
+  if (words.length <= maxWords) {
+    return text;
+  }
+
+  let limited = words.slice(0, maxWords).join(" ");
+
+  if (!/[.!?]$/.test(limited)) {
+    limited += ".";
   }
 
   return limited;
+}
+
+function isGoodRoast(text) {
+  const bannedFormalWords = [
+    "sepertinya",
+    "kehidupanmu",
+    "komedi situasional",
+    "skenario",
+    "berdasarkan jawabanmu",
+    "mencerminkan",
+    "menunjukkan bahwa",
+    "mungkin kamu perlu",
+    "kamu adalah pribadi",
+    "tampaknya",
+  ];
+
+  const lower = text.toLowerCase();
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+
+  if (!text || wordCount > 16) return false;
+
+  return !bannedFormalWords.some((word) => lower.includes(word));
 }
 
 function makeFallbackRoast(name, answers) {
@@ -213,20 +253,24 @@ function makeFallbackRoast(name, answers) {
     .toLowerCase();
 
   if (selectedAnswers.includes("privasi") || selectedAnswers.includes("rahasia")) {
-    return `${name}, kamu sok misterius, padahal yang bikin orang penasaran cuma kenapa pilihanmu seberantakan itu.`;
+    return `${name}, sok misterius amat, padahal isinya cuma kebingungan yang dikasih password.`;
   }
 
   if (selectedAnswers.includes("takut") || selectedAnswers.includes("basi")) {
-    return `${name}, kamu hidupnya penuh antisipasi, tapi tetap kelihatan seperti orang yang kalah duluan sebelum mulai.`;
+    return `${name}, hidupmu kebanyakan waspada, tapi hasilnya tetap goblok juga.`;
   }
 
   if (selectedAnswers.includes("pengalaman") || selectedAnswers.includes("kesempatan")) {
-    return `${name}, kamu bilang cari pengalaman, tapi auranya lebih mirip orang yang ikut-ikutan biar tidak kelihatan kosong.`;
+    return `${name}, bilang cari pengalaman, padahal cuma takut kelihatan kosong.`;
   }
 
   if (selectedAnswers.includes("tidur") || selectedAnswers.includes("rebahan")) {
-    return `${name}, kamu bukan butuh istirahat, kamu butuh alasan baru supaya kelihatan hidupmu punya arah.`;
+    return `${name}, kamu bukan capek, kamu cuma malas yang kebetulan punya nama.`;
   }
 
-  return `${name}, pilihanmu punya energi orang yang sok santai, tapi sebenarnya panik kalau hidup mulai minta keputusan.`;
+  if (selectedAnswers.includes("nongkrong") || selectedAnswers.includes("otw")) {
+    return `${name}, kamu bilang otw, tapi hidupmu aja belum jalan.`;
+  }
+
+  return `${name}, pilihanmu random banget, kayak otakmu lagi buffering tapi sok yakin.`;
 }

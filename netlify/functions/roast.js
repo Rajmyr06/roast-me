@@ -1,4 +1,37 @@
+const ALLOWED_BAD_WORDS = [
+  "goblok",
+  "dongo",
+  "bodoh",
+  "bego",
+  "tolol",
+  "kampret",
+  "anjir",
+  "kocak"
+];
+
+const BANNED_FORMAL_PHRASES = [
+  "sepertinya",
+  "kehidupanmu",
+  "komedi situasional",
+  "skenario",
+  "berdasarkan jawabanmu",
+  "mencerminkan",
+  "menunjukkan bahwa",
+  "mungkin kamu perlu",
+  "kamu adalah pribadi",
+  "tampaknya",
+  "layaknya",
+  "ibarat",
+  "seperti sebuah",
+  "dapat dikatakan",
+  "secara tidak langsung"
+];
+
 exports.handler = async function (event) {
+  if (event.httpMethod === "OPTIONS") {
+    return jsonResponse(204, {});
+  }
+
   if (event.httpMethod !== "POST") {
     return jsonResponse(405, {
       error: "Method not allowed.",
@@ -48,63 +81,66 @@ exports.handler = async function (event) {
 Kamu adalah AI roast generator bahasa Indonesia untuk web hiburan.
 
 Gaya wajib:
-- Kasar ringan sampai sedang boleh.
-- Boleh pakai kata seperti: anjir, goblok, tolol, bego, kampret, buset.
-- Dingin, nyebelin, personal, dan ngejek.
-- Harus terdengar seperti ejekan teman tongkrongan, bukan kalimat formal.
-- Singkat dan langsung nusuk.
+- Dingin, kasar, personal, dan ngejek.
+- Harus terdengar seperti ejekan teman tongkrongan.
+- Boleh memakai kata kasar ringan sampai sedang.
+- Wajib pakai minimal 1 kata dari daftar ini: goblok, dongo, bodoh, bego, tolol, kampret, anjir.
+- Roast harus pendek, nyelekit, dan tidak formal.
+- Jangan membuat kalimat panjang.
+- Jangan puitis.
+- Jangan seperti motivator.
+- Jangan seperti caption bijak.
+- Jangan terlalu sopan.
 
 Batasan:
 - Jangan SARA.
 - Jangan politik.
 - Jangan seksual eksplisit.
-- Jangan menyerang fisik, penyakit, disabilitas, keluarga, kemiskinan, atau trauma.
+- Jangan menyerang fisik.
+- Jangan menyerang penyakit.
+- Jangan menyerang disabilitas.
+- Jangan menyerang keluarga.
+- Jangan menyerang kemiskinan.
+- Jangan menyerang trauma.
 - Jangan ancaman.
-- Jangan memberi nasihat.
-- Jangan terdengar puitis.
-- Jangan terdengar seperti motivator.
-- Jangan memakai kalimat formal.
+- Jangan menyuruh menyakiti diri sendiri atau orang lain.
 
 Kata/frasa yang dilarang:
-- sepertinya
-- kehidupanmu
-- komedi situasional
-- skenario
-- berdasarkan jawabanmu
-- mencerminkan
-- menunjukkan bahwa
-- mungkin kamu perlu
-- kamu adalah pribadi
-- tampaknya
+${BANNED_FORMAL_PHRASES.map((phrase) => `- ${phrase}`).join("\n")}
 
 Output:
 - Hanya 1 kalimat.
-- Maksimal 16 kata.
+- Maksimal 14 kata.
+- Langsung roast.
 - Tidak boleh ada pembuka.
 - Tidak boleh ada penjelasan.
+- Tidak boleh ada emoji.
 `;
 
   const userPrompt = `
-Nama: ${cleanName}
+Nama target: ${cleanName}
 
-Jawaban:
+Jawaban target:
 ${answersText}
 
 Buat 1 roast pendek untuk ${cleanName}.
 
 Aturan:
-- Maksimal 16 kata.
-- Harus dingin, kasar, personal, dan nyelekit.
+- Maksimal 14 kata.
+- Wajib pakai minimal 1 kata: goblok, dongo, bodoh, bego, tolol, kampret, atau anjir.
+- Harus dingin, personal, kasar, dan nyelekit.
 - Jangan formal.
 - Jangan panjang.
 - Jangan pakai analogi panjang.
 - Jangan pakai emoji.
+- Jangan pakai tanda kutip.
 - Langsung roast saja.
 
 Contoh gaya:
-${cleanName}, pilihanmu gobloknya konsisten, kayak hidupmu dikendalikan tombol skip.
-${cleanName}, kamu bukan random, kamu cuma berantakan dan terlalu pede buat sadar.
-${cleanName}, auramu kayak orang sok santai, padahal isi kepalanya error 404.
+${cleanName}, pilihanmu goblok banget, tapi anehnya kamu tetap pede.
+${cleanName}, kamu bukan random, kamu cuma dongo dengan rasa percaya diri.
+${cleanName}, otakmu bego juga ya, buffering tapi tetap sok yakin.
+${cleanName}, kamu tuh bodoh terstruktur, kacau tapi konsisten.
 `;
 
   try {
@@ -117,7 +153,7 @@ ${cleanName}, auramu kayak orang sok santai, padahal isi kepalanya error 404.
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
         max_tokens: 45,
-        temperature: 1.0,
+        temperature: 0.95,
         messages: [
           {
             role: "system",
@@ -145,7 +181,7 @@ ${cleanName}, auramu kayak orang sok santai, padahal isi kepalanya error 404.
 
     roast = cleanRoast(roast);
     roast = forceOneSentence(roast);
-    roast = limitWords(roast, 16);
+    roast = limitWords(roast, 14);
 
     if (!isGoodRoast(roast)) {
       roast = makeFallbackRoast(cleanName, answers);
@@ -169,8 +205,11 @@ function jsonResponse(statusCode, body) {
     statusCode,
     headers: {
       "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
     },
-    body: JSON.stringify(body),
+    body: statusCode === 204 ? "" : JSON.stringify(body),
   };
 }
 
@@ -183,6 +222,7 @@ function sanitizeText(text) {
 
 function cleanRoast(text) {
   return String(text)
+    .replace(/```json/g, "")
     .replace(/```/g, "")
     .replace(/^["'“”]+|["'“”]+$/g, "")
     .replace(/^Roast:\s*/i, "")
@@ -196,7 +236,10 @@ function cleanRoast(text) {
 
 function forceOneSentence(text) {
   const match = text.match(/[^.!?]+[.!?]?/);
-  if (!match) return text.trim();
+
+  if (!match) {
+    return text.trim();
+  }
 
   let sentence = match[0].trim();
 
@@ -224,25 +267,23 @@ function limitWords(text, maxWords) {
 }
 
 function isGoodRoast(text) {
-  const bannedFormalWords = [
-    "sepertinya",
-    "kehidupanmu",
-    "komedi situasional",
-    "skenario",
-    "berdasarkan jawabanmu",
-    "mencerminkan",
-    "menunjukkan bahwa",
-    "mungkin kamu perlu",
-    "kamu adalah pribadi",
-    "tampaknya",
-  ];
+  if (!text) return false;
 
   const lower = text.toLowerCase();
   const wordCount = text.split(/\s+/).filter(Boolean).length;
 
-  if (!text || wordCount > 16) return false;
+  if (wordCount > 14) return false;
 
-  return !bannedFormalWords.some((word) => lower.includes(word));
+  const hasBadWord = ALLOWED_BAD_WORDS.some((word) => lower.includes(word));
+  if (!hasBadWord) return false;
+
+  const hasFormalPhrase = BANNED_FORMAL_PHRASES.some((phrase) =>
+    lower.includes(phrase)
+  );
+
+  if (hasFormalPhrase) return false;
+
+  return true;
 }
 
 function makeFallbackRoast(name, answers) {
@@ -253,7 +294,7 @@ function makeFallbackRoast(name, answers) {
     .toLowerCase();
 
   if (selectedAnswers.includes("privasi") || selectedAnswers.includes("rahasia")) {
-    return `${name}, sok misterius amat, padahal isinya cuma kebingungan yang dikasih password.`;
+    return `${name}, sok misterius amat, padahal isinya cuma dongo yang dikasih password.`;
   }
 
   if (selectedAnswers.includes("takut") || selectedAnswers.includes("basi")) {
@@ -261,16 +302,24 @@ function makeFallbackRoast(name, answers) {
   }
 
   if (selectedAnswers.includes("pengalaman") || selectedAnswers.includes("kesempatan")) {
-    return `${name}, bilang cari pengalaman, padahal cuma takut kelihatan kosong.`;
+    return `${name}, bilang cari pengalaman, padahal cuma takut kelihatan kosong, bego.`;
   }
 
   if (selectedAnswers.includes("tidur") || selectedAnswers.includes("rebahan")) {
-    return `${name}, kamu bukan capek, kamu cuma malas yang kebetulan punya nama.`;
+    return `${name}, kamu bukan capek, kamu cuma malas dongo yang dikasih alasan.`;
   }
 
   if (selectedAnswers.includes("nongkrong") || selectedAnswers.includes("otw")) {
-    return `${name}, kamu bilang otw, tapi hidupmu aja belum jalan.`;
+    return `${name}, kamu bilang otw, tapi hidupmu aja belum jalan, goblok.`;
   }
 
-  return `${name}, pilihanmu random banget, kayak otakmu lagi buffering tapi sok yakin.`;
+  if (selectedAnswers.includes("makan") || selectedAnswers.includes("lapar")) {
+    return `${name}, urusan makan aja ribet, pantes hidupmu gobloknya konsisten.`;
+  }
+
+  if (selectedAnswers.includes("panik") || selectedAnswers.includes("overthinking")) {
+    return `${name}, otakmu kebanyakan loading, tapi hasil akhirnya tetap dongo.`;
+  }
+
+  return `${name}, pilihanmu random banget, kayak otak bego yang sok punya prinsip.`;
 }

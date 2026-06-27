@@ -1,47 +1,47 @@
 const fallbackQuestions = [
   {
-    text: "Kalau diajak nongkrong dadakan, reaksi kamu?",
+    text: "Kalau social battery kamu lagi 3%, kamu bakal gimana?",
     options: [
-      "Langsung gas walau belum mandi",
-      "Nanya dulu siapa aja yang ikut",
+      "Tetap ikut nongkrong biar nggak FOMO",
       "Bilang otw padahal masih rebahan",
-      "Auto nolak karena baterai sosial tinggal 3%"
+      "Mute semua chat, disappear mode",
+      "Datang, tapi mukanya kayak loading screen"
     ]
   },
   {
-    text: "Kalau chat kamu cuma dibalas 'wkwk', kamu bakal?",
+    text: "Kalau crush cuma balas 'wkwk', reaction kamu apa?",
     options: [
-      "Balas wkwk juga biar impas",
-      "Overthinking sampai besok",
-      "Ganti topik dengan panik",
-      "Langsung sadar diri lalu menghilang"
+      "Overthinking sampai bikin teori sendiri",
+      "Balas santai padahal hati kebakar",
+      "Langsung act cool kayak nggak peduli",
+      "Udah tahu kalah, tapi tetap lanjut"
     ]
   },
   {
-    text: "Pilih kemampuan absurd yang paling cocok buat kamu:",
+    text: "Pilih toxic trait yang paling kamu banget:",
     options: [
-      "Bisa lapar lagi 5 menit setelah makan",
-      "Bisa tidur kapan saja kecuali malam",
-      "Bisa lupa tugas tapi ingat drama orang",
-      "Bisa niat produktif tanpa benar-benar produktif"
+      "Sok chill, padahal panik internally",
+      "Niat produktif, eksekusinya cuma buka laptop",
+      "Ngilang dulu, baru jelasin nanti",
+      "Bilang gapapa, tapi dendamnya premium"
     ]
   },
   {
-    text: "Kalau hidup kamu jadi film, genrenya apa?",
+    text: "Kalau hidup kamu punya genre Netflix, paling cocok apa?",
     options: [
-      "Komedi salah paham",
-      "Drama low budget",
-      "Thriller deadline",
-      "Dokumenter orang bingung"
+      "Drama low budget tapi konfliknya banyak",
+      "Comedy of errors, literally tiap hari",
+      "Thriller deadline yang nggak selesai-selesai",
+      "Documentary orang sok kuat"
     ]
   },
   {
-    text: "Kalau disuruh mendeskripsikan diri pakai satu benda:",
+    text: "Kalau lagi punya masalah, kamu biasanya:",
     options: [
-      "Charger rusak tapi masih dipaksa hidup",
-      "Kursi plastik kondangan",
-      "Kopi dingin yang terlupakan",
-      "Alarm yang selalu disnooze"
+      "Bilang fine, terus collapse sendiri",
+      "Curhat panjang, tapi tetap nggak berubah",
+      "Bikin playlist sedih biar makin valid",
+      "Tidur, berharap problem-nya logout sendiri"
     ]
   }
 ];
@@ -58,18 +58,24 @@ exports.handler = async function () {
   }
 
   const prompt = `
-Buat tepat 5 pertanyaan pilihan ganda absurd dan lucu untuk website roast.
+Buat tepat 5 pertanyaan pilihan ganda absurd dan lucu untuk website AI roast.
 
-Syarat:
-- Bahasa Indonesia.
-- Topik random: kebiasaan aneh, situasi awkward, dilema receh, preferensi absurd.
-- Jangan tentang kuliah, pekerjaan, politik, SARA, atau hal vulgar.
+Gaya bahasa:
+- Bahasa Indonesia campur English ala Jaksel.
+- Gunakan slang seperti: literally, honestly, lowkey, vibes, red flag, valid, bestie, FOMO, overthinking, social battery, trust issue, spill, energy.
 - Relatable untuk anak muda Indonesia.
+- Nada harus santai, receh, nyebelin, dan modern.
+- Jangan terlalu formal.
+- Jangan pakai bahasa baku seperti soal ujian.
+- Jangan terlalu panjang.
+
+Syarat konten:
+- Topik random: kebiasaan aneh, situasi awkward, dilema receh, social battery, FOMO, overthinking, chat crush, nongkrong, mood swing.
+- Jangan tentang kuliah, pekerjaan, politik, SARA, seksual eksplisit, penyakit, disabilitas, keluarga, trauma, atau fisik.
 - Setiap pertanyaan punya tepat 4 pilihan jawaban.
-- Setiap pilihan mencerminkan tipe kepribadian yang berbeda.
-- Balas hanya JSON valid.
+- Setiap pilihan jawaban mencerminkan tipe kepribadian berbeda.
 - Jangan gunakan markdown.
-- Jangan beri penjelasan tambahan.
+- Balas hanya JSON valid.
 
 Format wajib:
 {
@@ -91,13 +97,14 @@ Format wajib:
       },
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
-        max_tokens: 600,
-        temperature: 0.6,
+        max_tokens: 700,
+        temperature: 0.8,
         response_format: { type: "json_object" },
         messages: [
           {
             role: "system",
-            content: "Kamu hanya boleh membalas JSON valid. Jangan gunakan markdown atau teks tambahan."
+            content:
+              "Kamu hanya boleh membalas JSON valid. Jangan gunakan markdown, komentar, atau teks tambahan."
           },
           {
             role: "user",
@@ -113,37 +120,41 @@ Format wajib:
       return jsonResponse(200, {
         questions: fallbackQuestions,
         source: "fallback",
-        note: data.error?.message || `Groq error: ${response.status}`
+        note: data.error?.message || `Groq error: ${response.status}`,
       });
     }
 
-    let raw = data.choices?.[0]?.message?.content?.trim() || "";
+    const raw = data.choices?.[0]?.message?.content?.trim() || "";
 
-    raw = raw
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
+    let parsed;
 
-    const parsed = JSON.parse(raw);
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return jsonResponse(200, {
+        questions: fallbackQuestions,
+        source: "fallback",
+        note: "Respons Groq bukan JSON valid.",
+      });
+    }
 
     if (!isValidQuestions(parsed.questions)) {
       return jsonResponse(200, {
         questions: fallbackQuestions,
         source: "fallback",
-        note: "Format pertanyaan dari Groq tidak sesuai."
+        note: "Format pertanyaan dari Groq tidak sesuai.",
       });
     }
 
     return jsonResponse(200, {
       questions: parsed.questions,
-      source: "ai"
+      source: "ai",
     });
-
   } catch (err) {
     return jsonResponse(200, {
       questions: fallbackQuestions,
       source: "fallback",
-      note: err.message
+      note: err.message,
     });
   }
 };

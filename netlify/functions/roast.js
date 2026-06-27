@@ -1,32 +1,34 @@
 const ROAST_LEVELS = {
   aman: {
     label: "Aman",
-    maxWords: 24,
-    maxTokens: 90,
+    maxWords: 26,
+    maxTokens: 100,
     temperature: 0.75,
     style: `
-- Lucu, santai, dan sedikit nyindir.
+- Lucu, santai, nyindir halus.
+- Bahasa Jaksel style: Indo-English natural.
 - Tidak pakai kata kasar.
-- Cocok untuk user yang cuma mau roast ringan.
-- Tetap personal berdasarkan jawaban user.
+- Cocok untuk roast ringan.
+- Tetap personal dari jawaban user.
 `,
     swearRule: `
 - Jangan pakai kata kasar.
 - Jangan terlalu pedas.
 `,
     examples: (name) => `
-${name}, kamu bukan random, cuma terlalu kreatif dalam mengambil keputusan yang aneh.
-${name}, pilihanmu rapi banget buat orang yang hidupnya kelihatan masih loading.
+${name}, kamu tuh lowkey chaos, tapi masih denial bilang hidupmu fine.
+${name}, vibes kamu tuh kayak orang yang niat glow up, tapi eksekusinya loading.
 `,
   },
 
   pedas: {
     label: "Pedas",
-    maxWords: 22,
-    maxTokens: 90,
+    maxWords: 24,
+    maxTokens: 100,
     temperature: 0.85,
     style: `
 - Nyindir, dingin, dan personal.
+- Bahasa Jaksel style: Indo-English natural.
 - Boleh pakai kata kasar ringan.
 - Roast harus terasa seperti ejekan teman dekat.
 - Jangan terlalu sopan.
@@ -36,20 +38,21 @@ ${name}, pilihanmu rapi banget buat orang yang hidupnya kelihatan masih loading.
 - Pakai maksimal 1 kata kasar.
 `,
     examples: (name) => `
-${name}, pilihanmu bego juga, tapi percaya dirinya kayak fitur premium.
-${name}, anjir, kamu bukan unik, cuma kacau dengan gaya yang konsisten.
+${name}, honestly kamu bukan misterius, kamu cuma bego tapi dikasih aesthetic vibes.
+${name}, lowkey pilihanmu red flag, tapi pede-nya valid banget, anjir.
 `,
   },
 
   kasar: {
     label: "Kasar",
-    maxWords: 20,
-    maxTokens: 90,
+    maxWords: 22,
+    maxTokens: 100,
     temperature: 0.95,
     style: `
 - Kasar, dingin, personal, dan ngejek.
+- Bahasa Jaksel style: Indo-English natural.
 - Tidak usah terlalu sopan.
-- Harus terdengar seperti hinaan tongkrongan.
+- Harus terdengar seperti hinaan tongkrongan anak Jaksel.
 - Roast harus pendek dan langsung nusuk.
 `,
     swearRule: `
@@ -57,32 +60,33 @@ ${name}, anjir, kamu bukan unik, cuma kacau dengan gaya yang konsisten.
 - Boleh pakai: goblok, dongo, bodoh, bego, tolol, kampret, anjir.
 `,
     examples: (name) => `
-${name}, kamu bukan random, kamu cuma dongo dengan rasa percaya diri yang kebesaran.
-${name}, pilihanmu goblok banget, tapi anehnya kamu tetap pede.
+${name}, your whole vibe tuh dongo, tapi confidence-nya kayak main character.
+${name}, kamu lowkey goblok, tapi cara kamu denial itu almost inspiring.
 `,
   },
 
   brutal: {
     label: "Brutal",
-    maxWords: 20,
-    maxTokens: 90,
+    maxWords: 22,
+    maxTokens: 100,
     temperature: 1.05,
     style: `
 - Paling kasar, paling dingin, paling personal.
+- Bahasa Jaksel style: Indo-English natural.
 - Tidak perlu sopan.
-- Tidak perlu sensor kata kasar umum.
+- Kata kasar umum boleh dipakai.
 - Roast harus jahat, pendek, nyelekit, dan langsung kena.
-- Gaya seperti teman dekat yang sedang ngejek tanpa rem.
+- Gaya seperti teman dekat Jaksel yang lagi ngejek tanpa rem.
 `,
     swearRule: `
-- Tidak ada sensor untuk kata kasar umum.
-- Boleh pakai kata kasar seperti goblok, dongo, tolol, bodoh, bego, kampret, anjir, bangsat, bajingan.
-- Jangan menahan diri dalam gaya bahasa.
+- Kata kasar umum boleh dipakai.
+- Boleh pakai kata seperti goblok, dongo, tolol, bodoh, bego, kampret, anjir, bangsat, bajingan.
+- Jangan menahan diri dalam gaya bahasa kasar umum.
 `,
     examples: (name) => `
-${name}, goblokmu rapi banget, kayak sudah jadi kepribadian utama.
-${name}, otakmu dongo, tapi pede-nya bangsat juga.
-${name}, kamu bukan red flag, kamu bencana kecil yang bisa ngetik.
+${name}, your vibe tuh bangsat banget, dongo tapi acting like the main character.
+${name}, kamu bukan red flag, kamu whole toxic ecosystem, gobloknya premium.
+${name}, otakmu lowkey dongo, tapi pede-nya bajingan juga.
 `,
   },
 };
@@ -98,6 +102,27 @@ Batas yang tetap dilarang:
 - Jangan ancaman.
 - Jangan menyuruh menyakiti diri sendiri atau orang lain.
 `;
+
+const JAKSEL_WORDS = [
+  "literally",
+  "honestly",
+  "lowkey",
+  "vibes",
+  "vibe",
+  "red flag",
+  "valid",
+  "bestie",
+  "energy",
+  "FOMO",
+  "overthinking",
+  "social battery",
+  "trust issue",
+  "main character",
+  "toxic",
+  "denial",
+  "glow up",
+  "aesthetic"
+];
 
 const BAD_FORMAL_PHRASES = [
   "sepertinya",
@@ -201,7 +226,18 @@ Kamu adalah AI roast generator bahasa Indonesia untuk web hiburan.
 
 Mode roast aktif: ${levelConfig.label}
 
-Gaya wajib:
+Gaya bahasa wajib:
+- Gunakan bahasa Jaksel style.
+- Campur bahasa Indonesia dan English secara natural.
+- Gunakan slang seperti: ${JAKSEL_WORDS.join(", ")}.
+- Jangan full English.
+- Jangan terlalu formal.
+- Jangan seperti caption motivasi.
+- Jangan seperti artikel.
+- Jangan seperti guru BK.
+- Output harus terasa seperti teman tongkrongan lagi nge-roast.
+
+Gaya roast:
 ${levelConfig.style}
 
 Aturan kata kasar:
@@ -216,10 +252,11 @@ Aturan penting:
 - Kalimat harus selesai secara natural.
 - Jangan membuat kalimat menggantung.
 - Jangan berhenti di kata seperti: sudah, yang, karena, tapi, untuk, dengan, jadi.
-- Jangan membuat roast seperti kalimat formal.
+- Jangan terdengar formal.
 - Jangan terdengar seperti motivator.
 - Jangan pakai analogi panjang.
 - Jangan pakai frasa formal seperti: ${BAD_FORMAL_PHRASES.join(", ")}.
+- Wajib pakai minimal 1 kata/frasa Jaksel seperti: lowkey, honestly, literally, vibes, red flag, valid, energy, main character, toxic, denial.
 
 Aturan output:
 - Hanya 1 kalimat.
@@ -244,8 +281,10 @@ Level roast: ${levelConfig.label}
 Aturan:
 - Maksimal ${levelConfig.maxWords} kata.
 - Harus personal dari pola jawaban target.
+- Bahasa Jaksel style, Indo-English.
+- Wajib ada minimal 1 slang Jaksel.
 - Jangan salin mentah-mentah isi jawaban target.
-- Harus pendek, tajam, dan nyelekit.
+- Harus pendek, tajam, nyelekit, dan nyebelin.
 - Jangan formal.
 - Jangan panjang.
 - Jangan menjelaskan alasan roast.
@@ -394,6 +433,12 @@ function isValidRoast(text, maxWords) {
 
   if (hasFormalPhrase) return false;
 
+  const hasJakselWord = JAKSEL_WORDS.some((word) =>
+    lower.includes(word.toLowerCase())
+  );
+
+  if (!hasJakselWord) return false;
+
   return true;
 }
 
@@ -416,93 +461,93 @@ function makeFallbackRoast(name, answers, level) {
 
   if (level === "aman") {
     if (hasAny(selectedAnswers, ["privasi", "rahasia", "sendiri"])) {
-      return `${name}, sok misterius amat, padahal cuma bingung yang dikasih password.`;
+      return `${name}, kamu lowkey sok misterius, padahal cuma bingung yang dikasih password.`;
     }
 
-    if (hasAny(selectedAnswers, ["pengalaman", "kesempatan", "ikut acara"])) {
-      return `${name}, bilang cari pengalaman, padahal cuma takut kelihatan kosong.`;
+    if (hasAny(selectedAnswers, ["pengalaman", "kesempatan", "ikut acara", "fomo"])) {
+      return `${name}, FOMO kamu valid sih, tapi vibes kosongnya tetap kebaca.`;
     }
 
     if (hasAny(selectedAnswers, ["lapar", "makan", "basi"])) {
-      return `${name}, urusan makan aja dramatis, pantes hidupmu penuh plot twist receh.`;
+      return `${name}, food vibes kamu chaotic, literally lapar doang tapi dramanya premium.`;
     }
 
     if (hasAny(selectedAnswers, ["tidur", "rebahan", "capek"])) {
-      return `${name}, kamu bukan butuh istirahat, kamu butuh hidup yang lebih jelas arahnya.`;
+      return `${name}, social battery kamu bukan low, hidupmu aja belum fully charged.`;
     }
 
-    return `${name}, pilihanmu random banget, kayak hidupmu belum selesai loading.`;
+    return `${name}, your vibe tuh random, kayak hidupmu masih stuck di loading screen.`;
   }
 
   if (level === "pedas") {
     if (hasAny(selectedAnswers, ["privasi", "rahasia", "sendiri"])) {
-      return `${name}, sok misterius amat, padahal isinya cuma bego yang dikunci.`;
+      return `${name}, sok mysterious, padahal isinya cuma bego yang dikasih private mode.`;
     }
 
-    if (hasAny(selectedAnswers, ["pengalaman", "kesempatan", "ikut acara"])) {
-      return `${name}, bilang cari pengalaman, padahal cuma takut kelihatan kosong, anjir.`;
+    if (hasAny(selectedAnswers, ["pengalaman", "kesempatan", "ikut acara", "fomo"])) {
+      return `${name}, FOMO kamu kenceng, tapi personality-nya masih trial version, anjir.`;
     }
 
     if (hasAny(selectedAnswers, ["lapar", "makan", "basi"])) {
-      return `${name}, urusan makan aja ribet, pantes keputusanmu bego tapi konsisten.`;
+      return `${name}, literally urusan makan aja ribet, pantes decision making kamu bego.`;
     }
 
     if (hasAny(selectedAnswers, ["tidur", "rebahan", "capek"])) {
-      return `${name}, kamu bukan capek, kamu cuma malas yang dikasih alasan rapi.`;
+      return `${name}, kamu bukan capek, kamu just lazy with aesthetic excuse.`;
     }
 
-    return `${name}, pilihanmu bego banget, tapi percaya dirinya tetap jalan.`;
+    return `${name}, pilihanmu bego, tapi confidence-nya main character banget.`;
   }
 
   if (level === "kasar") {
     if (hasAny(selectedAnswers, ["privasi", "rahasia", "sendiri"])) {
-      return `${name}, sok misterius amat, padahal isinya cuma dongo yang dikasih password.`;
+      return `${name}, sok mysterious banget, padahal vibes-nya cuma dongo pakai password.`;
     }
 
-    if (hasAny(selectedAnswers, ["takut", "basi", "waspada"])) {
-      return `${name}, hidupmu kebanyakan waspada, tapi hasilnya tetap goblok juga.`;
+    if (hasAny(selectedAnswers, ["takut", "basi", "waspada", "overthinking"])) {
+      return `${name}, overthinking kamu valid, tapi hasil akhirnya tetap goblok juga.`;
     }
 
-    if (hasAny(selectedAnswers, ["pengalaman", "kesempatan", "ikut acara"])) {
-      return `${name}, bilang cari pengalaman, padahal cuma takut kelihatan kosong, bego.`;
+    if (hasAny(selectedAnswers, ["pengalaman", "kesempatan", "ikut acara", "fomo"])) {
+      return `${name}, FOMO kamu brutal, tapi personality-nya kosong, bego.`;
     }
 
     if (hasAny(selectedAnswers, ["tidur", "rebahan", "capek"])) {
-      return `${name}, kamu bukan capek, kamu cuma malas dongo yang dikasih alasan.`;
+      return `${name}, kamu bukan low energy, kamu dongo yang kebetulan rebahan.`;
     }
 
     if (hasAny(selectedAnswers, ["lapar", "makan", "basi"])) {
-      return `${name}, makan aja konsisten, mikir masih trial version, goblok.`;
+      return `${name}, food obsession kamu valid, tapi otakmu tetap trial version, goblok.`;
     }
 
-    return `${name}, pilihanmu random banget, kayak otak bego yang sok punya prinsip.`;
+    return `${name}, your whole vibe tuh bego, tapi denial-nya main character banget.`;
   }
 
   if (level === "brutal") {
     if (hasAny(selectedAnswers, ["privasi", "rahasia", "sendiri"])) {
-      return `${name}, sok misterius bangsat, padahal isinya cuma dongo pakai password.`;
+      return `${name}, sok mysterious bangsat, padahal vibes-nya cuma dongo pakai password.`;
     }
 
-    if (hasAny(selectedAnswers, ["takut", "basi", "waspada"])) {
-      return `${name}, waspadamu ribet banget, tapi hasil akhirnya tetap goblok.`;
+    if (hasAny(selectedAnswers, ["takut", "basi", "waspada", "overthinking"])) {
+      return `${name}, overthinking kamu valid, tapi output-nya tetap goblok bangsat.`;
     }
 
-    if (hasAny(selectedAnswers, ["pengalaman", "kesempatan", "ikut acara"])) {
-      return `${name}, cari pengalaman apaan, kosongmu aja belum kelar, goblok.`;
+    if (hasAny(selectedAnswers, ["pengalaman", "kesempatan", "ikut acara", "fomo"])) {
+      return `${name}, FOMO kamu gede, tapi personality kosongmu literally goblok.`;
     }
 
     if (hasAny(selectedAnswers, ["tidur", "rebahan", "capek"])) {
-      return `${name}, kamu bukan capek, kamu malas bangsat yang sok punya alasan.`;
+      return `${name}, kamu bukan low energy, kamu malas bangsat with soft-launch excuse.`;
     }
 
     if (hasAny(selectedAnswers, ["lapar", "makan", "basi"])) {
-      return `${name}, urusan makan aja kacau, pantes hidupmu gobloknya konsisten.`;
+      return `${name}, urusan makan aja chaos, pantes hidupmu gobloknya consistent.`;
     }
 
-    return `${name}, otakmu dongo, tapi pede-nya bangsat juga.`;
+    return `${name}, your vibe tuh bangsat, dongo tapi acting like main character.`;
   }
 
-  return `${name}, pilihanmu random banget, kayak otak bego yang sok punya prinsip.`;
+  return `${name}, your whole vibe tuh bego, tapi denial-nya main character banget.`;
 }
 
 function hasAny(text, keywords) {

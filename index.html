@@ -158,7 +158,71 @@
         border-top: 1px solid var(--border);
         margin: 28px 0;
       }
+.roast-level-section {
+  margin-top: 22px;
+}
 
+.input-label {
+  display: block;
+  margin-bottom: 10px;
+  color: #f5f5f5;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.roast-level-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.roast-level-card {
+  position: relative;
+  display: block;
+  padding: 14px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.roast-level-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.roast-level-card span {
+  display: block;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.roast-level-card small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+}
+
+.roast-level-card:has(input:checked) {
+  border-color: #ff3b6b;
+  background: rgba(255, 59, 107, 0.16);
+  box-shadow: 0 0 0 1px rgba(255, 59, 107, 0.25);
+}
+
+.roast-level-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+@media (max-width: 520px) {
+  .roast-level-grid {
+    grid-template-columns: 1fr;
+  }
+}
       /* ── QUESTIONS ── */
       #questionsSection {
         display: flex;
@@ -457,7 +521,35 @@
             autocomplete="off"
           />
         </div>
+<div class="roast-level-section">
+  <label class="input-label">Level kekasaran AI</label>
 
+  <div class="roast-level-grid">
+    <label class="roast-level-card">
+      <input type="radio" name="roastLevel" value="aman" />
+      <span>Aman</span>
+      <small>Nyindir halus</small>
+    </label>
+
+    <label class="roast-level-card">
+      <input type="radio" name="roastLevel" value="pedas" />
+      <span>Pedas</span>
+      <small>Mulai nyelekit</small>
+    </label>
+
+    <label class="roast-level-card">
+      <input type="radio" name="roastLevel" value="kasar" checked />
+      <span>Kasar</span>
+      <small>Goblok, dongo, tolol</small>
+    </label>
+
+    <label class="roast-level-card">
+      <input type="radio" name="roastLevel" value="brutal" />
+      <span>Brutal</span>
+      <small>No sensor kata kasar</small>
+    </label>
+  </div>
+</div>
         <hr class="divider" />
 
         <!-- Pertanyaan -->
@@ -568,6 +660,9 @@
       // ─── SUBMIT ───────────────────────────────────────────────
       async function submitRoast() {
         const name = document.getElementById("nameInput").value.trim();
+        const roastLevel =
+          document.querySelector('input[name="roastLevel"]:checked')?.value || "kasar";
+
         hideError();
 
         if (!name) return showError("Isi nama kamu dulu.");
@@ -580,7 +675,11 @@
           const res = await fetch("/api/roast", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, answers: Object.values(selected) }),
+            body: JSON.stringify({
+              name,
+              answers: Object.values(selected),
+              roastLevel,
+            }),
           });
 
           const data = await res.json();
@@ -588,7 +687,7 @@
           if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
           if (!data.roast) throw new Error("Respons roast kosong.");
 
-          showResult(name, data.roast);
+          showResult(name, data.roast, data.level || roastLevel);
 
         } catch (err) {
           showForm();
@@ -597,10 +696,15 @@
       }
 
       // ─── RESULT ───────────────────────────────────────────────
-      function showResult(name, text) {
+      function showResult(name, text, level) {
         document.getElementById("resultName").textContent  = name;
         document.getElementById("resultEmoji").textContent =
           EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+
+        const resultTag = document.querySelector(".result-tag");
+        if (resultTag) {
+          resultTag.textContent = `Sudah Diroast • ${String(level || "kasar").toUpperCase()}`;
+        }
 
         document.getElementById("loadingCard").classList.remove("show");
         document.getElementById("resultCard").classList.add("show");

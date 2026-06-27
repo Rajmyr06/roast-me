@@ -1,24 +1,86 @@
-exports.handler = async function (event, context) {
+const fallbackQuestions = [
+  {
+    text: "Kalau diajak nongkrong dadakan, reaksi kamu?",
+    options: [
+      "Langsung gas walau belum mandi",
+      "Nanya dulu siapa aja yang ikut",
+      "Bilang otw padahal masih rebahan",
+      "Auto nolak karena baterai sosial tinggal 3%"
+    ]
+  },
+  {
+    text: "Kalau chat kamu cuma dibalas 'wkwk', kamu bakal?",
+    options: [
+      "Balas wkwk juga biar impas",
+      "Overthinking sampai besok",
+      "Ganti topik dengan panik",
+      "Langsung sadar diri lalu menghilang"
+    ]
+  },
+  {
+    text: "Pilih kemampuan absurd yang paling cocok buat kamu:",
+    options: [
+      "Bisa lapar lagi 5 menit setelah makan",
+      "Bisa tidur kapan saja kecuali malam",
+      "Bisa lupa tugas tapi ingat drama orang",
+      "Bisa niat produktif tanpa benar-benar produktif"
+    ]
+  },
+  {
+    text: "Kalau hidup kamu jadi film, genrenya apa?",
+    options: [
+      "Komedi salah paham",
+      "Drama low budget",
+      "Thriller deadline",
+      "Dokumenter orang bingung"
+    ]
+  },
+  {
+    text: "Kalau disuruh mendeskripsikan diri pakai satu benda:",
+    options: [
+      "Charger rusak tapi masih dipaksa hidup",
+      "Kursi plastik kondangan",
+      "Kopi dingin yang terlupakan",
+      "Alarm yang selalu disnooze"
+    ]
+  }
+];
+
+exports.handler = async function () {
   const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
   if (!GROQ_API_KEY) {
-    return {
-      statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "GROQ_API_KEY belum diset di Netlify environment variables." }),
-    };
+    return jsonResponse(200, {
+      questions: fallbackQuestions,
+      source: "fallback",
+      note: "GROQ_API_KEY belum diset."
+    });
   }
 
-  const prompt = `Buat 5 pertanyaan pilihan ganda absurd dan lucu untuk website roast. Setiap pertanyaan punya tepat 4 pilihan jawaban.
+  const prompt = `
+Buat tepat 5 pertanyaan pilihan ganda absurd dan lucu untuk website roast.
 
 Syarat:
-- Topik random: kebiasaan aneh, situasi awkward, dilema receh, preferensi absurd
-- Jangan tentang kuliah, pekerjaan, atau politik
-- Relatable untuk anak muda Indonesia
-- Setiap pilihan jawaban mencerminkan tipe kepribadian yang berbeda
+- Bahasa Indonesia.
+- Topik random: kebiasaan aneh, situasi awkward, dilema receh, preferensi absurd.
+- Jangan tentang kuliah, pekerjaan, politik, SARA, atau hal vulgar.
+- Relatable untuk anak muda Indonesia.
+- Setiap pertanyaan punya tepat 4 pilihan jawaban.
+- Setiap pilihan mencerminkan tipe kepribadian yang berbeda.
+- Balas hanya JSON valid.
+- Jangan gunakan markdown.
+- Jangan beri penjelasan tambahan.
 
-Balas HANYA dengan JSON di bawah ini, tanpa teks lain, tanpa markdown, tanpa komentar:
-{"questions":[{"text":"isi pertanyaan di sini","options":["pilihan A","pilihan B","pilihan C","pilihan D"]}]}`;
+Format wajib:
+{
+  "questions": [
+    {
+      "text": "isi pertanyaan",
+      "options": ["pilihan A", "pilihan B", "pilihan C", "pilihan D"]
+    }
+  ]
+}
+`;
 
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -29,47 +91,87 @@ Balas HANYA dengan JSON di bawah ini, tanpa teks lain, tanpa markdown, tanpa kom
       },
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
-        max_tokens: 800,
-        temperature: 1.0,
-        messages: [{ role: "user", content: prompt }],
+        max_tokens: 600,
+        temperature: 0.6,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: "Kamu hanya boleh membalas JSON valid. Jangan gunakan markdown atau teks tambahan."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      return {
-        statusCode: 502,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: data.error?.message || `Groq error: ${response.status}` }),
-      };
+      return jsonResponse(200, {
+        questions: fallbackQuestions,
+        source: "fallback",
+        note: data.error?.message || `Groq error: ${response.status}`
+      });
     }
 
     let raw = data.choices?.[0]?.message?.content?.trim() || "";
 
-    // Bersihkan markdown jika ada
-    raw = raw.replace(/```json/g, "").replace(/```/g, "").trim();
+    raw = raw
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
 
-    // Ambil JSON dari dalam string (antisipasi ada teks sebelum/sesudah)
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error("Tidak ada JSON valid dalam respons Groq.");
+    const parsed = JSON.parse(raw);
 
-    const parsed = JSON.parse(match[0]);
-
-    if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
-      throw new Error("Format JSON tidak sesuai.");
+    if (!isValidQuestions(parsed.questions)) {
+      return jsonResponse(200, {
+        questions: fallbackQuestions,
+        source: "fallback",
+        note: "Format pertanyaan dari Groq tidak sesuai."
+      });
     }
 
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(parsed),
-    };
+    return jsonResponse(200, {
+      questions: parsed.questions,
+      source: "ai"
+    });
+
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: err.message }),
-    };
+    return jsonResponse(200, {
+      questions: fallbackQuestions,
+      source: "fallback",
+      note: err.message
+    });
   }
 };
+
+function isValidQuestions(questions) {
+  return (
+    Array.isArray(questions) &&
+    questions.length === 5 &&
+    questions.every((question) => {
+      return (
+        typeof question.text === "string" &&
+        question.text.trim().length > 0 &&
+        Array.isArray(question.options) &&
+        question.options.length === 4 &&
+        question.options.every(
+          (option) => typeof option === "string" && option.trim().length > 0
+        )
+      );
+    })
+  );
+}
+
+function jsonResponse(statusCode, body) {
+  return {
+    statusCode,
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  };
+}

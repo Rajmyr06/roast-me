@@ -1,61 +1,99 @@
-exports.handler = async function (event, context) {
+exports.handler = async function (event) {
   if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Method not allowed." }),
-    };
+    return jsonResponse(405, {
+      error: "Method not allowed.",
+    });
   }
 
   const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-  if (!GROQ_API_KEY) {
-    return {
-      statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "GROQ_API_KEY belum diset di Netlify environment variables." }),
-    };
-  }
-
   let body;
+
   try {
-    body = JSON.parse(event.body);
+    body = JSON.parse(event.body || "{}");
   } catch {
-    return {
-      statusCode: 400,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Request body tidak valid." }),
-    };
+    return jsonResponse(400, {
+      error: "Request body tidak valid.",
+    });
   }
 
   const { name, answers } = body;
 
   if (!name || !Array.isArray(answers) || answers.length === 0) {
-    return {
-      statusCode: 400,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Data tidak lengkap: butuh name dan answers." }),
-    };
+    return jsonResponse(400, {
+      error: "Data tidak lengkap: butuh name dan answers.",
+    });
   }
 
+  const cleanName = sanitizeText(name).slice(0, 30);
+
   const answersText = answers
-    .map((a, i) => `Pertanyaan ${i + 1}: ${a.question}\nJawaban: ${a.answer}`)
+    .map((item, index) => {
+      const question = sanitizeText(item.question || "");
+      const answer = sanitizeText(item.answer || "");
+
+      return `Nomor ${index + 1}
+Pertanyaan: ${question}
+Jawaban: ${answer}`;
+    })
     .join("\n\n");
 
-  const prompt = `Kamu adalah roaster profesional yang jago roast seseorang dengan cara yang lucu, relatable, dan sedikit pedas — tapi tidak kasar, tidak menyinggung SARA, dan tidak vulgar.
+  if (!GROQ_API_KEY) {
+    return jsonResponse(200, {
+      roast: makeFallbackRoast(cleanName, answers),
+      source: "fallback",
+      note: "GROQ_API_KEY belum diset.",
+    });
+  }
 
-Nama orang yang di-roast: ${name}
+  const systemPrompt = `
+Kamu adalah generator roast bahasa Indonesia.
 
-Jawaban-jawaban yang dia pilih:
+Gaya roast:
+- Dingin.
+- Menusuk.
+- Personal berdasarkan jawaban user.
+- Ngejek secara lucu.
+- Singkat, tajam, dan tidak bertele-tele.
+
+Batasan wajib:
+- Jangan SARA.
+- Jangan politik.
+- Jangan seksual.
+- Jangan menyerang fisik, disabilitas, penyakit, keluarga, kemiskinan, atau trauma.
+- Jangan menggunakan kata kasar ekstrem.
+- Jangan memberi nasihat.
+- Jangan membuat cerita panjang.
+- Jangan pakai emoji.
+- Jangan pakai pembuka seperti "Oke", "Baik", atau "Ini roast-nya".
+- Jangan sebut "berdasarkan jawabanmu".
+- Jangan terdengar seperti motivator.
+- Jangan terlalu aman atau terlalu sopan.
+- Output hanya roast final.
+`;
+
+  const userPrompt = `
+Nama target: ${cleanName}
+
+Jawaban target:
 ${answersText}
 
-Instruksi:
-- Tulis roast personal 4–6 kalimat berdasarkan pola jawaban di atas
-- Bahasa Indonesia gaul, santai, natural — bukan formal
-- Boleh hiperbola atau analogi lucu
-- Akhiri dengan satu kalimat nyindir yang tetap lucu
-- Langsung tulis roast-nya, tanpa pembuka "Oke", "Baik", atau semacamnya
-- Jangan pakai emoji`;
+Tugas:
+Buat roast untuk ${cleanName}.
+
+Aturan output:
+- Maksimal 2 kalimat.
+- Maksimal 28 kata.
+- Harus terasa personal dari pilihan jawabannya.
+- Harus lebih nyelekit daripada lucu receh.
+- Jangan pakai analogi panjang.
+- Jangan mengulang pola "kamu kayak...".
+- Jangan menjelaskan alasan roast.
+- Langsung tulis roast-nya saja.
+
+Contoh gaya:
+${cleanName}, kamu bukan misterius, cuma susah dipahami karena isinya juga belum tentu jelas. Bahkan pilihan hidupmu kelihatan seperti hasil klik asal.
+`;
 
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -66,36 +104,129 @@ Instruksi:
       },
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
-        max_tokens: 250,
-        temperature: 0.8,
-        messages: [{ role: "user", content: prompt }],
+        max_tokens: 80,
+        temperature: 0.75,
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt,
+          },
+          {
+            role: "user",
+            content: userPrompt,
+          },
+        ],
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      return {
-        statusCode: 502,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: data.error?.message || `Groq error: ${response.status}` }),
-      };
+      return jsonResponse(200, {
+        roast: makeFallbackRoast(cleanName, answers),
+        source: "fallback",
+        note: data.error?.message || `Groq error: ${response.status}`,
+      });
     }
 
-    const roast = data.choices?.[0]?.message?.content?.trim();
+    let roast = data.choices?.[0]?.message?.content?.trim() || "";
 
-    if (!roast) throw new Error("Respons roast kosong dari Groq.");
+    roast = cleanRoast(roast);
+    roast = limitRoast(roast, 28);
 
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roast }),
-    };
+    if (!roast) {
+      return jsonResponse(200, {
+        roast: makeFallbackRoast(cleanName, answers),
+        source: "fallback",
+        note: "Respons roast kosong dari Groq.",
+      });
+    }
+
+    return jsonResponse(200, {
+      roast,
+      source: "ai",
+    });
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: err.message }),
-    };
+    return jsonResponse(200, {
+      roast: makeFallbackRoast(cleanName, answers),
+      source: "fallback",
+      note: err.message,
+    });
   }
 };
+
+function jsonResponse(statusCode, body) {
+  return {
+    statusCode,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  };
+}
+
+function sanitizeText(text) {
+  return String(text)
+    .replace(/[<>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function cleanRoast(text) {
+  return String(text)
+    .replace(/```/g, "")
+    .replace(/^["'“”]+|["'“”]+$/g, "")
+    .replace(/^Roast:\s*/i, "")
+    .replace(/^AI Roast:\s*/i, "")
+    .replace(/^Ini roast-nya:\s*/i, "")
+    .replace(/\n+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function limitRoast(text, maxWords) {
+  const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+
+  let limited = sentences
+    .slice(0, 2)
+    .join(" ")
+    .trim();
+
+  const words = limited.split(/\s+/);
+
+  if (words.length > maxWords) {
+    limited = words.slice(0, maxWords).join(" ");
+
+    if (!/[.!?]$/.test(limited)) {
+      limited += ".";
+    }
+  }
+
+  return limited;
+}
+
+function makeFallbackRoast(name, answers) {
+  const selectedAnswers = answers
+    .map((item) => sanitizeText(item.answer || ""))
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (selectedAnswers.includes("privasi") || selectedAnswers.includes("rahasia")) {
+    return `${name}, kamu sok misterius, padahal yang bikin orang penasaran cuma kenapa pilihanmu seberantakan itu.`;
+  }
+
+  if (selectedAnswers.includes("takut") || selectedAnswers.includes("basi")) {
+    return `${name}, kamu hidupnya penuh antisipasi, tapi tetap kelihatan seperti orang yang kalah duluan sebelum mulai.`;
+  }
+
+  if (selectedAnswers.includes("pengalaman") || selectedAnswers.includes("kesempatan")) {
+    return `${name}, kamu bilang cari pengalaman, tapi auranya lebih mirip orang yang ikut-ikutan biar tidak kelihatan kosong.`;
+  }
+
+  if (selectedAnswers.includes("tidur") || selectedAnswers.includes("rebahan")) {
+    return `${name}, kamu bukan butuh istirahat, kamu butuh alasan baru supaya kelihatan hidupmu punya arah.`;
+  }
+
+  return `${name}, pilihanmu punya energi orang yang sok santai, tapi sebenarnya panik kalau hidup mulai minta keputusan.`;
+}

@@ -1,34 +1,35 @@
 const ROAST_LEVELS = {
   aman: {
     label: "Aman",
-    maxWords: 22,
-    maxTokens: 70,
+    maxWords: 24,
+    maxTokens: 90,
     temperature: 0.75,
     style: `
 - Lucu, santai, dan sedikit nyindir.
 - Tidak pakai kata kasar.
 - Cocok untuk user yang cuma mau roast ringan.
-- Tetap personal berdasarkan jawaban.
+- Tetap personal berdasarkan jawaban user.
 `,
     swearRule: `
 - Jangan pakai kata kasar.
 - Jangan terlalu pedas.
 `,
     examples: (name) => `
+${name}, kamu bukan random, cuma terlalu kreatif dalam mengambil keputusan yang aneh.
 ${name}, pilihanmu rapi banget buat orang yang hidupnya kelihatan masih loading.
-${name}, kamu bukan random, cuma terlalu kreatif dalam membuat keputusan aneh.
 `,
   },
 
   pedas: {
     label: "Pedas",
-    maxWords: 18,
-    maxTokens: 60,
+    maxWords: 22,
+    maxTokens: 90,
     temperature: 0.85,
     style: `
-- Lebih nyindir, dingin, dan personal.
+- Nyindir, dingin, dan personal.
 - Boleh pakai kata kasar ringan.
 - Roast harus terasa seperti ejekan teman dekat.
+- Jangan terlalu sopan.
 `,
     swearRule: `
 - Boleh pakai kata: anjir, bego, bodoh, kampret.
@@ -42,45 +43,46 @@ ${name}, anjir, kamu bukan unik, cuma kacau dengan gaya yang konsisten.
 
   kasar: {
     label: "Kasar",
-    maxWords: 15,
-    maxTokens: 55,
+    maxWords: 20,
+    maxTokens: 90,
     temperature: 0.95,
     style: `
 - Kasar, dingin, personal, dan ngejek.
 - Tidak usah terlalu sopan.
 - Harus terdengar seperti hinaan tongkrongan.
+- Roast harus pendek dan langsung nusuk.
 `,
     swearRule: `
 - Wajib pakai minimal 1 kata kasar.
 - Boleh pakai: goblok, dongo, bodoh, bego, tolol, kampret, anjir.
 `,
     examples: (name) => `
-${name}, kamu bukan random, kamu cuma dongo dengan rasa percaya diri.
+${name}, kamu bukan random, kamu cuma dongo dengan rasa percaya diri yang kebesaran.
 ${name}, pilihanmu goblok banget, tapi anehnya kamu tetap pede.
 `,
   },
 
   brutal: {
     label: "Brutal",
-    maxWords: 12,
-    maxTokens: 50,
+    maxWords: 20,
+    maxTokens: 90,
     temperature: 1.05,
     style: `
 - Paling kasar, paling dingin, paling personal.
 - Tidak perlu sopan.
 - Tidak perlu sensor kata kasar umum.
-- Roast harus pendek, jahat, nyelekit, dan langsung kena.
+- Roast harus jahat, pendek, nyelekit, dan langsung kena.
 - Gaya seperti teman dekat yang sedang ngejek tanpa rem.
 `,
     swearRule: `
 - Tidak ada sensor untuk kata kasar umum.
 - Boleh pakai kata kasar seperti goblok, dongo, tolol, bodoh, bego, kampret, anjir, bangsat, bajingan.
-- Jangan menahan diri dalam gaya bahasa, tapi tetap jangan melanggar batas keamanan.
+- Jangan menahan diri dalam gaya bahasa.
 `,
     examples: (name) => `
 ${name}, goblokmu rapi banget, kayak sudah jadi kepribadian utama.
-${name}, kamu bukan red flag, kamu bencana kecil yang bisa ngetik.
 ${name}, otakmu dongo, tapi pede-nya bangsat juga.
+${name}, kamu bukan red flag, kamu bencana kecil yang bisa ngetik.
 `,
   },
 };
@@ -113,6 +115,32 @@ const BAD_FORMAL_PHRASES = [
   "seperti sebuah",
   "dapat dikatakan",
   "secara tidak langsung",
+  "itu bukti kamu",
+];
+
+const HANGING_ENDINGS = [
+  "sudah.",
+  "yang.",
+  "kayak.",
+  "karena.",
+  "tapi.",
+  "buat.",
+  "jadi.",
+  "sebagai.",
+  "dengan.",
+  "untuk.",
+  "kalau.",
+  "itu.",
+  "ini.",
+  "dan.",
+  "di.",
+  "ke.",
+  "dari.",
+  "sama.",
+  "atau.",
+  "padahal.",
+  "bukti.",
+  "bukti kamu.",
 ];
 
 exports.handler = async function (event) {
@@ -181,6 +209,18 @@ ${levelConfig.swearRule}
 
 ${SAFETY_BOUNDARIES}
 
+Aturan penting:
+- Jangan mengulang mentah-mentah jawaban user.
+- Jangan mulai roast dengan pilihan jawaban user.
+- Ambil sifat/persona dari jawaban, bukan menyalin teks jawabannya.
+- Kalimat harus selesai secara natural.
+- Jangan membuat kalimat menggantung.
+- Jangan berhenti di kata seperti: sudah, yang, karena, tapi, untuk, dengan, jadi.
+- Jangan membuat roast seperti kalimat formal.
+- Jangan terdengar seperti motivator.
+- Jangan pakai analogi panjang.
+- Jangan pakai frasa formal seperti: ${BAD_FORMAL_PHRASES.join(", ")}.
+
 Aturan output:
 - Hanya 1 kalimat.
 - Maksimal ${levelConfig.maxWords} kata.
@@ -189,10 +229,6 @@ Aturan output:
 - Jangan pakai penjelasan.
 - Jangan pakai emoji.
 - Jangan pakai tanda kutip.
-- Jangan terdengar formal.
-- Jangan terdengar seperti motivator.
-- Jangan pakai analogi panjang.
-- Jangan pakai frasa formal seperti: ${BAD_FORMAL_PHRASES.join(", ")}.
 `;
 
   const userPrompt = `
@@ -207,11 +243,13 @@ Level roast: ${levelConfig.label}
 
 Aturan:
 - Maksimal ${levelConfig.maxWords} kata.
-- Harus personal dari jawaban target.
+- Harus personal dari pola jawaban target.
+- Jangan salin mentah-mentah isi jawaban target.
 - Harus pendek, tajam, dan nyelekit.
 - Jangan formal.
 - Jangan panjang.
 - Jangan menjelaskan alasan roast.
+- Kalimat harus selesai, tidak boleh menggantung.
 - Langsung tulis roast final saja.
 
 Contoh gaya:
@@ -257,9 +295,8 @@ ${levelConfig.examples(cleanName)}
 
     roast = cleanRoast(roast);
     roast = forceOneSentence(roast);
-    roast = limitWords(roast, levelConfig.maxWords);
 
-    if (!isValidRoast(roast, levelConfig.maxWords)) {
+    if (!isValidRoast(roast, levelConfig.maxWords) || isIncompleteRoast(roast)) {
       roast = makeFallbackRoast(cleanName, answers, selectedLevel);
     }
 
@@ -323,35 +360,23 @@ function cleanRoast(text) {
 }
 
 function forceOneSentence(text) {
-  const match = text.match(/[^.!?]+[.!?]?/);
+  const sentences = text.match(/[^.!?]+[.!?]+/g);
 
-  if (!match) {
-    return text.trim();
+  if (sentences && sentences.length > 0) {
+    return sentences[0].trim();
   }
 
-  let sentence = match[0].trim();
+  const cleaned = text.trim();
 
-  if (!/[.!?]$/.test(sentence)) {
-    sentence += ".";
+  if (!cleaned) {
+    return "";
   }
 
-  return sentence;
-}
-
-function limitWords(text, maxWords) {
-  const words = text.split(/\s+/).filter(Boolean);
-
-  if (words.length <= maxWords) {
-    return text;
+  if (!/[.!?]$/.test(cleaned)) {
+    return `${cleaned}.`;
   }
 
-  let limited = words.slice(0, maxWords).join(" ");
-
-  if (!/[.!?]$/.test(limited)) {
-    limited += ".";
-  }
-
-  return limited;
+  return cleaned;
 }
 
 function isValidRoast(text, maxWords) {
@@ -361,6 +386,7 @@ function isValidRoast(text, maxWords) {
   const wordCount = text.split(/\s+/).filter(Boolean).length;
 
   if (wordCount > maxWords) return false;
+  if (wordCount < 4) return false;
 
   const hasFormalPhrase = BAD_FORMAL_PHRASES.some((phrase) =>
     lower.includes(phrase)
@@ -371,6 +397,16 @@ function isValidRoast(text, maxWords) {
   return true;
 }
 
+function isIncompleteRoast(text) {
+  const lower = text.toLowerCase().trim();
+
+  if (!/[.!?]$/.test(lower)) {
+    return true;
+  }
+
+  return HANGING_ENDINGS.some((ending) => lower.endsWith(ending));
+}
+
 function makeFallbackRoast(name, answers, level) {
   const selectedAnswers = answers
     .map((item) => sanitizeText(item.answer || ""))
@@ -379,67 +415,87 @@ function makeFallbackRoast(name, answers, level) {
     .toLowerCase();
 
   if (level === "aman") {
-    if (selectedAnswers.includes("privasi") || selectedAnswers.includes("rahasia")) {
+    if (hasAny(selectedAnswers, ["privasi", "rahasia", "sendiri"])) {
       return `${name}, sok misterius amat, padahal cuma bingung yang dikasih password.`;
     }
 
-    if (selectedAnswers.includes("pengalaman") || selectedAnswers.includes("kesempatan")) {
+    if (hasAny(selectedAnswers, ["pengalaman", "kesempatan", "ikut acara"])) {
       return `${name}, bilang cari pengalaman, padahal cuma takut kelihatan kosong.`;
+    }
+
+    if (hasAny(selectedAnswers, ["lapar", "makan", "basi"])) {
+      return `${name}, urusan makan aja dramatis, pantes hidupmu penuh plot twist receh.`;
+    }
+
+    if (hasAny(selectedAnswers, ["tidur", "rebahan", "capek"])) {
+      return `${name}, kamu bukan butuh istirahat, kamu butuh hidup yang lebih jelas arahnya.`;
     }
 
     return `${name}, pilihanmu random banget, kayak hidupmu belum selesai loading.`;
   }
 
   if (level === "pedas") {
-    if (selectedAnswers.includes("privasi") || selectedAnswers.includes("rahasia")) {
+    if (hasAny(selectedAnswers, ["privasi", "rahasia", "sendiri"])) {
       return `${name}, sok misterius amat, padahal isinya cuma bego yang dikunci.`;
     }
 
-    if (selectedAnswers.includes("pengalaman") || selectedAnswers.includes("kesempatan")) {
+    if (hasAny(selectedAnswers, ["pengalaman", "kesempatan", "ikut acara"])) {
       return `${name}, bilang cari pengalaman, padahal cuma takut kelihatan kosong, anjir.`;
+    }
+
+    if (hasAny(selectedAnswers, ["lapar", "makan", "basi"])) {
+      return `${name}, urusan makan aja ribet, pantes keputusanmu bego tapi konsisten.`;
+    }
+
+    if (hasAny(selectedAnswers, ["tidur", "rebahan", "capek"])) {
+      return `${name}, kamu bukan capek, kamu cuma malas yang dikasih alasan rapi.`;
     }
 
     return `${name}, pilihanmu bego banget, tapi percaya dirinya tetap jalan.`;
   }
 
   if (level === "kasar") {
-    if (selectedAnswers.includes("privasi") || selectedAnswers.includes("rahasia")) {
+    if (hasAny(selectedAnswers, ["privasi", "rahasia", "sendiri"])) {
       return `${name}, sok misterius amat, padahal isinya cuma dongo yang dikasih password.`;
     }
 
-    if (selectedAnswers.includes("takut") || selectedAnswers.includes("basi")) {
+    if (hasAny(selectedAnswers, ["takut", "basi", "waspada"])) {
       return `${name}, hidupmu kebanyakan waspada, tapi hasilnya tetap goblok juga.`;
     }
 
-    if (selectedAnswers.includes("pengalaman") || selectedAnswers.includes("kesempatan")) {
+    if (hasAny(selectedAnswers, ["pengalaman", "kesempatan", "ikut acara"])) {
       return `${name}, bilang cari pengalaman, padahal cuma takut kelihatan kosong, bego.`;
     }
 
-    if (selectedAnswers.includes("tidur") || selectedAnswers.includes("rebahan")) {
+    if (hasAny(selectedAnswers, ["tidur", "rebahan", "capek"])) {
       return `${name}, kamu bukan capek, kamu cuma malas dongo yang dikasih alasan.`;
+    }
+
+    if (hasAny(selectedAnswers, ["lapar", "makan", "basi"])) {
+      return `${name}, makan aja konsisten, mikir masih trial version, goblok.`;
     }
 
     return `${name}, pilihanmu random banget, kayak otak bego yang sok punya prinsip.`;
   }
 
   if (level === "brutal") {
-    if (selectedAnswers.includes("privasi") || selectedAnswers.includes("rahasia")) {
+    if (hasAny(selectedAnswers, ["privasi", "rahasia", "sendiri"])) {
       return `${name}, sok misterius bangsat, padahal isinya cuma dongo pakai password.`;
     }
 
-    if (selectedAnswers.includes("takut") || selectedAnswers.includes("basi")) {
+    if (hasAny(selectedAnswers, ["takut", "basi", "waspada"])) {
       return `${name}, waspadamu ribet banget, tapi hasil akhirnya tetap goblok.`;
     }
 
-    if (selectedAnswers.includes("pengalaman") || selectedAnswers.includes("kesempatan")) {
+    if (hasAny(selectedAnswers, ["pengalaman", "kesempatan", "ikut acara"])) {
       return `${name}, cari pengalaman apaan, kosongmu aja belum kelar, goblok.`;
     }
 
-    if (selectedAnswers.includes("tidur") || selectedAnswers.includes("rebahan")) {
+    if (hasAny(selectedAnswers, ["tidur", "rebahan", "capek"])) {
       return `${name}, kamu bukan capek, kamu malas bangsat yang sok punya alasan.`;
     }
 
-    if (selectedAnswers.includes("makan") || selectedAnswers.includes("lapar")) {
+    if (hasAny(selectedAnswers, ["lapar", "makan", "basi"])) {
       return `${name}, urusan makan aja kacau, pantes hidupmu gobloknya konsisten.`;
     }
 
@@ -447,4 +503,8 @@ function makeFallbackRoast(name, answers, level) {
   }
 
   return `${name}, pilihanmu random banget, kayak otak bego yang sok punya prinsip.`;
+}
+
+function hasAny(text, keywords) {
+  return keywords.some((keyword) => text.includes(keyword));
 }

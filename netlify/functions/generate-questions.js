@@ -1,4 +1,4 @@
-const fallbackQuestionBank = [
+const questionBank = [
   {
     text: "Kalau social battery kamu tinggal 3%, kamu bakal gimana?",
     options: [
@@ -133,121 +133,176 @@ const fallbackQuestionBank = [
       "Bikin rencana baru tanpa eksekusi",
       "Ketawa dulu, hancur belakangan"
     ]
+  },
+  {
+    text: "Kalau kamu jadi notifikasi, tipe kamu apa?",
+    options: [
+      "Important tapi sering diabaikan",
+      "Spam tapi merasa urgent",
+      "Reminder yang muncul pas sudah telat",
+      "Update pending yang nggak pernah selesai"
+    ]
+  },
+  {
+    text: "Kalau kamu lagi bad mood, biasanya kamu:",
+    options: [
+      "Jadi silent tapi aura nyolot",
+      "Ngomong gapapa padahal semua salah",
+      "Buka makanan biar emosi punya teman",
+      "Ngetik panjang terus dihapus"
+    ]
+  },
+  {
+    text: "Kalau isi dompet kamu bisa ngomong, dia bakal bilang:",
+    options: [
+      "Bestie, please stop",
+      "Kita bukan old money, sadar diri",
+      "Jajanmu valid, saldomu tidak",
+      "Financial planning kamu cuma vibes"
+    ]
+  },
+  {
+    text: "Kalau hidup kamu punya bug, bug utamanya apa?",
+    options: [
+      "Niat tinggi, eksekusi hilang",
+      "Mikir kelamaan, action nggak jalan",
+      "Sok chill, padahal internal error",
+      "Update diri pending dari tahun lalu"
+    ]
+  },
+  {
+    text: "Kalau kamu masuk grup baru, first impression kamu:",
+    options: [
+      "Diam dulu, scan red flag",
+      "Sok asik biar cepat blend in",
+      "Nunggu diajak ngomong dulu",
+      "Langsung jadi penonton drama"
+    ]
+  },
+  {
+    text: "Kalau kamu lagi overthinking jam 2 pagi, topiknya apa?",
+    options: [
+      "Chat lama yang harusnya nggak dipikirin",
+      "Masa depan yang belum tentu kejadian",
+      "Kesalahan kecil dari 4 tahun lalu",
+      "Kenapa hidup nggak punya undo button"
+    ]
+  },
+  {
+    text: "Kalau personality kamu dijual online, deskripsinya:",
+    options: [
+      "Barang random, kondisi apa adanya",
+      "Sedikit chaos, masih layak pakai",
+      "Minus arah hidup, selebihnya aman",
+      "No refund karena pembeli harus siap mental"
+    ]
+  },
+  {
+    text: "Kalau kamu jadi fitur aplikasi, kamu fitur apa?",
+    options: [
+      "Dark mode, kelihatan tenang tapi suram",
+      "Beta version, banyak bug tapi pede",
+      "Autocorrect, sok bener padahal nyusahin",
+      "Incognito mode, banyak rahasia nggak penting"
+    ]
+  },
+  {
+    text: "Kalau relationship kamu sama tanggung jawab:",
+    options: [
+      "Seen doang, belum dibalas",
+      "Dekat tapi toxic",
+      "Putus nyambung tiap deadline",
+      "Soft launching dari jauh"
+    ]
+  },
+  {
+    text: "Kalau teman minta advice, kamu bakal:",
+    options: [
+      "Ngasih nasihat bijak yang sendiri nggak dilakukan",
+      "Bilang sabar, padahal kamu juga berantakan",
+      "Ikut emosi biar solidarity valid",
+      "Kasih solusi, lalu overthinking sendiri"
+    ]
+  },
+  {
+    text: "Kalau kamu jadi playlist, judulnya apa?",
+    options: [
+      "Sad but Make It Aesthetic",
+      "Main Character Tanpa Plot",
+      "Overthinking Deluxe Edition",
+      "Random Songs for Random Damage"
+    ]
+  },
+  {
+    text: "Kalau kamu dikasih waktu kosong, biasanya:",
+    options: [
+      "Scroll sampai lupa punya hidup",
+      "Bikin rencana produktif palsu",
+      "Tidur sebentar jadi tiga jam",
+      "Bengong sambil merasa deep"
+    ]
+  },
+  {
+    text: "Kalau ada drama baru, posisi kamu:",
+    options: [
+      "Ngaku nggak peduli tapi tahu detail",
+      "Jadi pendengar pasif yang menikmati",
+      "Ikut panas padahal bukan urusan",
+      "Minta spill tapi sok netral"
+    ]
+  },
+  {
+    text: "Kalau kamu jadi status WhatsApp, bunyinya:",
+    options: [
+      "Available but emotionally unavailable",
+      "Busy padahal rebahan",
+      "Typing... tapi nggak jadi ngomong",
+      "Online tapi mentally offline"
+    ]
+  },
+  {
+    text: "Kalau hidup kamu pakai rating, review orang-orang:",
+    options: [
+      "Konsep bagus, eksekusi dipertanyakan",
+      "Visual oke, sistem error",
+      "Banyak drama, minim update",
+      "Potential ada, niatnya hilang"
+    ]
+  },
+  {
+    text: "Kalau kamu punya superpower receh, kamu pilih:",
+    options: [
+      "Bisa pura-pura fine dengan sempurna",
+      "Bisa lapar lagi setelah kenyang",
+      "Bisa lupa masalah dengan tidur",
+      "Bisa overthinking tanpa bukti"
+    ]
+  },
+  {
+    text: "Kalau ada pilihan hidup yang penting, kamu:",
+    options: [
+      "Minta pendapat semua orang tapi tetap bingung",
+      "Pilih random lalu pura-pura yakin",
+      "Tunda sampai semesta capek",
+      "Overthinking sampai opsinya kadaluarsa"
+    ]
   }
 ];
 
 exports.handler = async function () {
-  const GROQ_API_KEY = process.env.GROQ_API_KEY;
-  const nonce = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const questions = getRandomQuestions(5);
 
-  if (!GROQ_API_KEY) {
-    return jsonResponse(200, {
-      questions: getRandomQuestions(),
-      source: "fallback",
-      nonce,
-      note: "GROQ_API_KEY belum diset."
-    });
-  }
-
-  const prompt = `
-Buat tepat 5 pertanyaan pilihan ganda absurd dan lucu untuk website AI roast.
-
-Nonce unik agar hasil tidak sama: ${nonce}
-
-Gaya bahasa:
-- Bahasa Indonesia campur English ala Jaksel.
-- Gunakan slang seperti: literally, honestly, lowkey, vibes, red flag, valid, bestie, FOMO, overthinking, social battery, trust issue, spill, energy.
-- Relatable untuk anak muda Indonesia.
-- Nada santai, receh, nyebelin, dan modern.
-- Jangan formal.
-- Jangan seperti soal ujian.
-- Jangan terlalu panjang.
-
-Syarat:
-- Topik random: kebiasaan aneh, situasi awkward, dilema receh, social battery, FOMO, overthinking, chat crush, nongkrong, mood swing.
-- Jangan tentang kuliah, pekerjaan, politik, SARA, seksual eksplisit, penyakit, disabilitas, keluarga, trauma, atau fisik.
-- Setiap pertanyaan punya tepat 4 pilihan jawaban.
-- Setiap pilihan jawaban mencerminkan tipe kepribadian berbeda.
-- Jangan gunakan markdown.
-- Balas hanya JSON valid.
-
-Format wajib:
-{
-  "questions": [
-    {
-      "text": "isi pertanyaan",
-      "options": ["pilihan A", "pilihan B", "pilihan C", "pilihan D"]
-    }
-  ]
-}
-`;
-
-  try {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        max_tokens: 750,
-        temperature: 1.05,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content: "Kamu hanya boleh membalas JSON valid. Jangan gunakan markdown, komentar, atau teks tambahan."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return jsonResponse(200, {
-        questions: getRandomQuestions(),
-        source: "fallback",
-        nonce,
-        note: data.error?.message || `Groq error: ${response.status}`,
-      });
-    }
-
-    const raw = data.choices?.[0]?.message?.content?.trim() || "";
-    const parsed = safeParseJson(raw);
-
-    if (!isValidQuestions(parsed.questions)) {
-      return jsonResponse(200, {
-        questions: getRandomQuestions(),
-        source: "fallback",
-        nonce,
-        note: "Format pertanyaan dari Groq tidak sesuai.",
-      });
-    }
-
-    return jsonResponse(200, {
-      questions: parsed.questions,
-      source: "ai",
-      nonce,
-    });
-  } catch (err) {
-    return jsonResponse(200, {
-      questions: getRandomQuestions(),
-      source: "fallback",
-      nonce,
-      note: err.message,
-    });
-  }
+  return jsonResponse(200, {
+    questions,
+    source: "local-random",
+    generatedAt: new Date().toISOString(),
+    nonce: Math.random().toString(36).slice(2),
+  });
 };
 
-function getRandomQuestions() {
-  return shuffle(fallbackQuestionBank)
-    .slice(0, 5)
+function getRandomQuestions(total) {
+  return shuffle(questionBank)
+    .slice(0, total)
     .map((question) => ({
       text: question.text,
       options: shuffle(question.options).slice(0, 4),
@@ -258,43 +313,11 @@ function shuffle(items) {
   const copy = [...items];
 
   for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
+    const randomIndex = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
   }
 
   return copy;
-}
-
-function safeParseJson(raw) {
-  try {
-    return JSON.parse(raw);
-  } catch {
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) return {};
-    try {
-      return JSON.parse(match[0]);
-    } catch {
-      return {};
-    }
-  }
-}
-
-function isValidQuestions(questions) {
-  return (
-    Array.isArray(questions) &&
-    questions.length === 5 &&
-    questions.every((question) => {
-      return (
-        typeof question.text === "string" &&
-        question.text.trim().length > 0 &&
-        Array.isArray(question.options) &&
-        question.options.length === 4 &&
-        question.options.every(
-          (option) => typeof option === "string" && option.trim().length > 0
-        )
-      );
-    })
-  );
 }
 
 function jsonResponse(statusCode, body) {
@@ -305,6 +328,7 @@ function jsonResponse(statusCode, body) {
       "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
       "Pragma": "no-cache",
       "Expires": "0",
+      "Surrogate-Control": "no-store",
     },
     body: JSON.stringify(body),
   };

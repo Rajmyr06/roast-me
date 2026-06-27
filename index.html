@@ -4,10 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Roast Me — Kalau Berani</title>
+
     <link
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     />
+
     <style>
       *,
       *::before,
@@ -35,7 +37,6 @@
         overflow-x: hidden;
       }
 
-      /* Noise texture overlay */
       body::before {
         content: "";
         position: fixed;
@@ -53,7 +54,6 @@
         z-index: 1;
       }
 
-      /* ── HEADER ── */
       header {
         padding: 64px 0 40px;
         text-align: center;
@@ -92,7 +92,6 @@
         line-height: 1.65;
       }
 
-      /* ── CARD ── */
       .card {
         background: var(--card);
         border: 1px solid var(--border);
@@ -101,7 +100,6 @@
         margin-bottom: 20px;
       }
 
-      /* ── SKELETON ── */
       #skeleton {
         display: block;
       }
@@ -114,14 +112,26 @@
       }
 
       @keyframes shimmer {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
+        0% {
+          background-position: 200% 0;
+        }
+
+        100% {
+          background-position: -200% 0;
+        }
       }
 
-      .sk-line { height: 14px; margin-bottom: 10px; }
-      .sk-box  { height: 46px; margin-bottom: 8px; border-radius: 8px; }
+      .sk-line {
+        height: 14px;
+        margin-bottom: 10px;
+      }
 
-      /* ── FORM ── */
+      .sk-box {
+        height: 46px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+      }
+
       #formCard {
         display: none;
       }
@@ -150,80 +160,96 @@
         transition: border-color 0.2s;
       }
 
-      input.text-input::placeholder { color: #3a3a3a; }
-      input.text-input:focus { border-color: var(--red); }
+      input.text-input::placeholder {
+        color: #3a3a3a;
+      }
+
+      input.text-input:focus {
+        border-color: var(--red);
+      }
 
       .divider {
         border: none;
         border-top: 1px solid var(--border);
         margin: 28px 0;
       }
-.roast-level-section {
-  margin-top: 22px;
-}
 
-.input-label {
-  display: block;
-  margin-bottom: 10px;
-  color: #f5f5f5;
-  font-size: 14px;
-  font-weight: 700;
-}
+      /* LEVEL ROAST */
+      .roast-level-section {
+        margin-top: 6px;
+      }
 
-.roast-level-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
+      .roast-level-title {
+        display: block;
+        font-family: "Space Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--gray);
+        margin-bottom: 12px;
+      }
 
-.roast-level-card {
-  position: relative;
-  display: block;
-  padding: 14px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
-  cursor: pointer;
-  transition: 0.2s ease;
-}
+      .roast-level-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
 
-.roast-level-card input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
+      .roast-level-card {
+        position: relative;
+        display: block;
+        cursor: pointer;
+      }
 
-.roast-level-card span {
-  display: block;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 800;
-}
+      .roast-level-card input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
 
-.roast-level-card small {
-  display: block;
-  margin-top: 4px;
-  color: rgba(255, 255, 255, 0.58);
-  font-size: 11px;
-}
+      .level-box {
+        display: block;
+        padding: 14px 12px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--bg);
+        transition: border-color 0.15s, background 0.15s, transform 0.15s;
+      }
 
-.roast-level-card:has(input:checked) {
-  border-color: #ff3b6b;
-  background: rgba(255, 59, 107, 0.16);
-  box-shadow: 0 0 0 1px rgba(255, 59, 107, 0.25);
-}
+      .level-box span {
+        display: block;
+        color: var(--white);
+        font-size: 14px;
+        font-weight: 800;
+      }
 
-.roast-level-card:hover {
-  transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.32);
-}
+      .level-box small {
+        display: block;
+        margin-top: 4px;
+        color: var(--gray);
+        font-size: 11px;
+        line-height: 1.4;
+      }
 
-@media (max-width: 520px) {
-  .roast-level-grid {
-    grid-template-columns: 1fr;
-  }
-}
-      /* ── QUESTIONS ── */
+      .roast-level-card:hover .level-box {
+        border-color: #444;
+        transform: translateY(-1px);
+      }
+
+      .roast-level-card input:checked + .level-box {
+        border-color: var(--red);
+        background: rgba(255, 61, 61, 0.12);
+        box-shadow: 0 0 0 1px rgba(255, 61, 61, 0.22);
+      }
+
+      .roast-level-card input:checked + .level-box span {
+        color: #fff;
+      }
+
+      .roast-level-card input:checked + .level-box small {
+        color: #ff9b9b;
+      }
+
       #questionsSection {
         display: flex;
         flex-direction: column;
@@ -276,7 +302,6 @@
         color: var(--white);
       }
 
-      /* ── BUTTONS ── */
       .btn-primary {
         width: 100%;
         background: var(--red);
@@ -292,8 +317,14 @@
         letter-spacing: 0.3px;
       }
 
-      .btn-primary:hover { background: var(--red-dark); }
-      .btn-primary:active { transform: scale(0.98); }
+      .btn-primary:hover {
+        background: var(--red-dark);
+      }
+
+      .btn-primary:active {
+        transform: scale(0.98);
+      }
+
       .btn-primary:disabled {
         background: #2a2a2a;
         color: #555;
@@ -320,7 +351,9 @@
         transition: border-color 0.15s;
       }
 
-      .btn-outline:hover { border-color: #555; }
+      .btn-outline:hover {
+        border-color: #555;
+      }
 
       .btn-red-outline {
         flex: 1;
@@ -336,9 +369,10 @@
         transition: background 0.15s;
       }
 
-      .btn-red-outline:hover { background: rgba(255, 61, 61, 0.08); }
+      .btn-red-outline:hover {
+        background: rgba(255, 61, 61, 0.08);
+      }
 
-      /* ── ERROR ── */
       .error-box {
         display: none;
         background: rgba(255, 61, 61, 0.07);
@@ -352,16 +386,19 @@
         margin-top: 14px;
       }
 
-      .error-box.show { display: block; }
+      .error-box.show {
+        display: block;
+      }
 
-      /* ── LOADING ROAST ── */
       #loadingCard {
         display: none;
         text-align: center;
         padding: 48px 32px;
       }
 
-      #loadingCard.show { display: block; }
+      #loadingCard.show {
+        display: block;
+      }
 
       .spinner {
         width: 34px;
@@ -373,7 +410,11 @@
         animation: spin 0.75s linear infinite;
       }
 
-      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
 
       .loading-txt {
         font-family: "Space Mono", monospace;
@@ -381,12 +422,13 @@
         color: var(--gray);
       }
 
-      /* ── RESULT ── */
       #resultCard {
         display: none;
       }
 
-      #resultCard.show { display: block; }
+      #resultCard.show {
+        display: block;
+      }
 
       .result-head {
         display: flex;
@@ -441,11 +483,16 @@
       }
 
       @keyframes blink {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0; }
+        0%,
+        100% {
+          opacity: 1;
+        }
+
+        50% {
+          opacity: 0;
+        }
       }
 
-      /* ── TOAST ── */
       #toast {
         position: fixed;
         bottom: 28px;
@@ -468,7 +515,6 @@
         transform: translateX(-50%) translateY(0);
       }
 
-      /* ── FOOTER ── */
       footer {
         text-align: center;
         padding: 36px 0 56px;
@@ -479,24 +525,35 @@
         text-transform: uppercase;
       }
 
+      @media (max-width: 520px) {
+        .roast-level-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
       @media (max-width: 480px) {
-        .card { padding: 24px 18px; }
-        h1 { letter-spacing: -1px; }
+        .card {
+          padding: 24px 18px;
+        }
+
+        h1 {
+          letter-spacing: -1px;
+        }
       }
     </style>
   </head>
+
   <body>
     <div class="container">
-      <!-- HEADER -->
       <header>
         <div class="badge">AI Roast Generator</div>
         <h1>Mau di-<em>Roast</em>?</h1>
         <p class="subtitle">
-          Jawab 5 pertanyaan absurd.<br />AI bakal roast kamu. Kalau berani.
+          Jawab 5 pertanyaan absurd.<br />
+          AI bakal roast kamu. Kalau berani.
         </p>
       </header>
 
-      <!-- SKELETON -->
       <div class="card" id="skeleton">
         <div class="sk sk-line" style="width: 35%; margin-bottom: 16px;"></div>
         <div class="sk sk-box" style="margin-bottom: 24px;"></div>
@@ -507,9 +564,7 @@
         <div class="sk sk-box"></div>
       </div>
 
-      <!-- FORM -->
       <div class="card" id="formCard">
-        <!-- Nama -->
         <div style="margin-bottom: 28px;">
           <label class="field-label" for="nameInput">Nama kamu</label>
           <input
@@ -521,38 +576,47 @@
             autocomplete="off"
           />
         </div>
-<div class="roast-level-section">
-  <label class="input-label">Level kekasaran AI</label>
 
-  <div class="roast-level-grid">
-    <label class="roast-level-card">
-      <input type="radio" name="roastLevel" value="aman" />
-      <span>Aman</span>
-      <small>Nyindir halus</small>
-    </label>
+        <div class="roast-level-section">
+          <label class="roast-level-title">Level kekasaran AI</label>
 
-    <label class="roast-level-card">
-      <input type="radio" name="roastLevel" value="pedas" />
-      <span>Pedas</span>
-      <small>Mulai nyelekit</small>
-    </label>
+          <div class="roast-level-grid">
+            <label class="roast-level-card">
+              <input type="radio" name="roastLevel" value="aman" />
+              <span class="level-box">
+                <span>Aman</span>
+                <small>Nyindir halus, tanpa kata kasar</small>
+              </span>
+            </label>
 
-    <label class="roast-level-card">
-      <input type="radio" name="roastLevel" value="kasar" checked />
-      <span>Kasar</span>
-      <small>Goblok, dongo, tolol</small>
-    </label>
+            <label class="roast-level-card">
+              <input type="radio" name="roastLevel" value="pedas" />
+              <span class="level-box">
+                <span>Pedas</span>
+                <small>Lebih nyelekit, sedikit kasar</small>
+              </span>
+            </label>
 
-    <label class="roast-level-card">
-      <input type="radio" name="roastLevel" value="brutal" />
-      <span>Brutal</span>
-      <small>No sensor kata kasar</small>
-    </label>
-  </div>
-</div>
+            <label class="roast-level-card">
+              <input type="radio" name="roastLevel" value="kasar" checked />
+              <span class="level-box">
+                <span>Kasar</span>
+                <small>Goblok, dongo, tolol, bego</small>
+              </span>
+            </label>
+
+            <label class="roast-level-card">
+              <input type="radio" name="roastLevel" value="brutal" />
+              <span class="level-box">
+                <span>Brutal</span>
+                <small>No sensor kata kasar umum</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
         <hr class="divider" />
 
-        <!-- Pertanyaan -->
         <div id="questionsSection"></div>
 
         <hr class="divider" />
@@ -560,68 +624,71 @@
         <button class="btn-primary" id="submitBtn" onclick="submitRoast()">
           Roast Gue
         </button>
+
         <div class="error-box" id="formError"></div>
       </div>
 
-      <!-- LOADING ROAST -->
       <div class="card" id="loadingCard">
         <div class="spinner"></div>
         <p class="loading-txt">AI lagi mikirin roast terbaik buat kamu...</p>
       </div>
 
-      <!-- RESULT -->
       <div class="card" id="resultCard">
         <div class="result-head">
           <div class="result-avatar" id="resultEmoji">🔥</div>
           <div>
             <div class="result-name" id="resultName"></div>
-            <div class="result-tag">Sudah Diroast</div>
+            <div class="result-tag" id="resultTag">Sudah Diroast</div>
           </div>
         </div>
+
         <hr class="divider" style="margin: 0 0 20px;" />
+
         <div class="roast-text" id="roastOutput"></div>
+
         <div class="btn-row">
           <button class="btn-outline" onclick="tryAgain()">Coba Lagi</button>
           <button class="btn-red-outline" onclick="copyResult()">Salin & Share</button>
         </div>
       </div>
 
-      <footer>Roast Me &mdash; No Filter, No Mercy</footer>
+      <footer>Roast Me — No Filter, No Mercy</footer>
     </div>
 
     <div id="toast"></div>
 
     <script>
-      // ─── STATE ───────────────────────────────────────────────
       let questions = [];
-      let selected  = {}; // { questionIndex: { question, answer } }
+      let selected = {};
+      let currentRoastLevel = "kasar";
 
       const EMOJIS = ["🔥", "💀", "😂", "👀", "🤡", "😭", "⚡", "🤦"];
 
-      // ─── INIT ─────────────────────────────────────────────────
       window.addEventListener("DOMContentLoaded", loadQuestions);
 
       async function loadQuestions() {
         showSkeleton();
+
         try {
-          const res  = await fetch("/api/generate-questions");
+          const res = await fetch("/api/generate-questions");
           const data = await res.json();
 
           if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-          if (!Array.isArray(data.questions) || data.questions.length === 0)
+
+          if (!Array.isArray(data.questions) || data.questions.length === 0) {
             throw new Error("Format soal tidak valid.");
+          }
 
           questions = data.questions;
-          selected  = {};
+          selected = {};
+
           renderQuestions();
           showForm();
-
         } catch (err) {
           showSkeletonError(err.message);
         }
       }
 
-      // ─── RENDER ───────────────────────────────────────────────
       function renderQuestions() {
         const container = document.getElementById("questionsSection");
         container.innerHTML = "";
@@ -632,13 +699,13 @@
           const optionsHTML = q.options
             .map(
               (opt, oi) =>
-                `<button class="opt-btn" onclick="pick(${qi}, ${oi}, this)">${opt}</button>`
+                `<button class="opt-btn" onclick="pick(${qi}, ${oi}, this)">${escapeHTML(opt)}</button>`
             )
             .join("");
 
           block.innerHTML = `
             <div class="q-label">0${qi + 1}</div>
-            <div class="q-text">${q.text}</div>
+            <div class="q-text">${escapeHTML(q.text)}</div>
             <div class="options" id="opts-${qi}">${optionsHTML}</div>
           `;
 
@@ -649,32 +716,42 @@
       function pick(qi, oi, el) {
         document
           .querySelectorAll(`#opts-${qi} .opt-btn`)
-          .forEach((b) => b.classList.remove("selected"));
+          .forEach((button) => button.classList.remove("selected"));
+
         el.classList.add("selected");
+
         selected[qi] = {
           question: questions[qi].text,
-          answer:   questions[qi].options[oi],
+          answer: questions[qi].options[oi],
         };
       }
 
-      // ─── SUBMIT ───────────────────────────────────────────────
       async function submitRoast() {
         const name = document.getElementById("nameInput").value.trim();
+
         const roastLevel =
           document.querySelector('input[name="roastLevel"]:checked')?.value || "kasar";
 
+        currentRoastLevel = roastLevel;
+
         hideError();
 
-        if (!name) return showError("Isi nama kamu dulu.");
-        if (Object.keys(selected).length < questions.length)
+        if (!name) {
+          return showError("Isi nama kamu dulu.");
+        }
+
+        if (Object.keys(selected).length < questions.length) {
           return showError("Jawab semua pertanyaan dulu — satu pun nggak boleh dilewat.");
+        }
 
         showLoading();
 
         try {
           const res = await fetch("/api/roast", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+            },
             body: JSON.stringify({
               name,
               answers: Object.values(selected),
@@ -688,23 +765,19 @@
           if (!data.roast) throw new Error("Respons roast kosong.");
 
           showResult(name, data.roast, data.level || roastLevel);
-
         } catch (err) {
           showForm();
           showError(`Gagal: ${err.message}`);
         }
       }
 
-      // ─── RESULT ───────────────────────────────────────────────
       function showResult(name, text, level) {
-        document.getElementById("resultName").textContent  = name;
+        document.getElementById("resultName").textContent = name;
+        document.getElementById("resultTag").textContent =
+          `Sudah Diroast • ${String(level || "kasar").toUpperCase()}`;
+
         document.getElementById("resultEmoji").textContent =
           EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
-
-        const resultTag = document.querySelector(".result-tag");
-        if (resultTag) {
-          resultTag.textContent = `Sudah Diroast • ${String(level || "kasar").toUpperCase()}`;
-        }
 
         document.getElementById("loadingCard").classList.remove("show");
         document.getElementById("resultCard").classList.add("show");
@@ -713,43 +786,59 @@
       }
 
       function typewriter(text) {
-        const el     = document.getElementById("roastOutput");
+        const el = document.getElementById("roastOutput");
         const cursor = document.createElement("span");
+
         cursor.className = "cursor";
         el.innerHTML = "";
         el.appendChild(cursor);
 
         let i = 0;
-        (function type() {
+
+        function type() {
           if (i < text.length) {
-            el.insertBefore(document.createTextNode(text[i++]), cursor);
+            el.insertBefore(document.createTextNode(text[i]), cursor);
+            i += 1;
             setTimeout(type, 17);
           } else {
             setTimeout(() => cursor.remove(), 1500);
           }
-        })();
+        }
+
+        type();
       }
 
-      // ─── ACTIONS ──────────────────────────────────────────────
       async function tryAgain() {
         document.getElementById("resultCard").classList.remove("show");
         document.getElementById("nameInput").value = "";
+
         await loadQuestions();
-        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        const checked = document.querySelector(
+          `input[name="roastLevel"][value="${currentRoastLevel}"]`
+        );
+
+        if (checked) checked.checked = true;
+
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
       }
 
       function copyResult() {
-        const name  = document.getElementById("resultName").textContent;
+        const name = document.getElementById("resultName").textContent;
         const roast = document.getElementById("roastOutput").textContent;
+        const tag = document.getElementById("resultTag").textContent;
+
         navigator.clipboard
-          .writeText(`🔥 AI Roast untuk ${name}:\n\n${roast}`)
+          .writeText(`🔥 AI Roast untuk ${name}\n${tag}\n\n${roast}`)
           .then(() => toast("Disalin! Siap dishare 🔥"));
       }
 
-      // ─── UI HELPERS ───────────────────────────────────────────
       function showSkeleton() {
-        document.getElementById("skeleton").style.display  = "block";
-        document.getElementById("formCard").style.display  = "none";
+        document.getElementById("skeleton").style.display = "block";
+        document.getElementById("formCard").style.display = "none";
         document.getElementById("loadingCard").classList.remove("show");
         document.getElementById("resultCard").classList.remove("show");
       }
@@ -757,17 +846,20 @@
       function showForm() {
         document.getElementById("skeleton").style.display = "none";
         document.getElementById("formCard").style.display = "block";
+        document.getElementById("loadingCard").classList.remove("show");
+        document.getElementById("resultCard").classList.remove("show");
       }
 
       function showLoading() {
         document.getElementById("formCard").style.display = "none";
         document.getElementById("loadingCard").classList.add("show");
+        document.getElementById("resultCard").classList.remove("show");
       }
 
       function showSkeletonError(msg) {
         document.getElementById("skeleton").innerHTML = `
           <p style="font-family:'Space Mono',monospace;font-size:12px;color:#ff8080;margin-bottom:14px;">
-            Gagal memuat soal: ${msg}
+            Gagal memuat soal: ${escapeHTML(msg)}
           </p>
           <button class="btn-primary" onclick="loadQuestions()" style="width:auto;padding:10px 24px;">
             Coba Lagi
@@ -789,7 +881,19 @@
         const el = document.getElementById("toast");
         el.textContent = msg;
         el.classList.add("show");
-        setTimeout(() => el.classList.remove("show"), 2600);
+
+        setTimeout(() => {
+          el.classList.remove("show");
+        }, 2600);
+      }
+
+      function escapeHTML(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
       }
     </script>
   </body>
